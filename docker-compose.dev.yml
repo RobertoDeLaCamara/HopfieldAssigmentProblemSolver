@@ -1,0 +1,25 @@
+version: '3.8'
+
+# Configuración para desarrollo
+# Se usa junto con docker-compose.yml: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  hopfield-service:
+    environment:
+      - FLASK_ENV=development
+      - PYTHONPATH=/app/src
+    volumes:
+      - ./hopfield/src:/app/src:ro
+    command: python src/api_server.py
+
+  api-gateway:
+    environment:
+      - GIN_MODE=debug
+      - LOG_LEVEL=debug
+    volumes:
+      - ./api:/app:ro
+    command: go run cmd/main.go
+
+  nginx:
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro

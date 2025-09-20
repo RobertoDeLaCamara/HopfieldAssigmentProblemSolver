@@ -1,0 +1,44 @@
+version: '3.8'
+
+# Configuración para producción
+# Se usa junto con docker-compose.yml: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up
+
+services:
+  hopfield-service:
+    environment:
+      - FLASK_ENV=production
+      - PYTHONPATH=/app/src
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+
+  api-gateway:
+    environment:
+      - GIN_MODE=release
+      - LOG_LEVEL=info
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+
+  nginx:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+        reservations:
+          memory: 128M
+          cpus: '0.1'
