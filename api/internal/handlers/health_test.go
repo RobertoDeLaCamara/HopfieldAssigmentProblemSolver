@@ -11,6 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestHealthHandler_HealthCheck tests the health endpoint to verify
+// that the service returns a successful response with a healthy status.
 func TestHealthHandler_HealthCheck(t *testing.T) {
 	// Setup
 	gin.SetMode(gin.TestMode)

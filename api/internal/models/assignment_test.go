@@ -6,6 +6,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestAssignmentRequest_Validate tests the validation of AssignmentRequest objects.
+// It checks that the Validate method returns an error when the cost matrix is empty,
+// non-square, contains negative costs, or is otherwise invalid.
 func TestAssignmentRequest_Validate(t *testing.T) {
 	tests := []struct {
 		name        string
