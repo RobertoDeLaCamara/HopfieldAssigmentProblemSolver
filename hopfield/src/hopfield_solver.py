@@ -13,147 +13,175 @@ logger = logging.getLogger(__name__)
 
 
 class HopfieldAssignmentSolver:
-    """
-    Assignment problem solver using Hopfield neural networks.
-    """
-    
-    def __init__(self, max_iterations: int = 1000, convergence_threshold: float = 1e-6):
+    def __init__(self, max_iterations: int = 1000, threshold: float = 0.001):
         """
-        Initialize the solver.
+        Initialize the Hopfield solver.
         
         Args:
-            max_iterations: Maximum number of iterations
-            convergence_threshold: Convergence threshold
+            max_iterations: Maximum number of iterations to run
+            threshold: Convergence threshold
         """
         self.max_iterations = max_iterations
-        self.convergence_threshold = convergence_threshold
-    
+        self.threshold = threshold
+        
+        # Hyperparameters for the energy function
+        # A, B, C enforce valid assignment constraints (one per row, one per col, total n)
+        # D minimizes the cost
+        self.A = 500.0
+        self.B = 500.0
+        self.C = 200.0
+        self.D = 200.0
+
+    def _kronecker_delta(self, i: int, j: int) -> int:
+        return 1 if i == j else 0
+
+    def _activation(self, x: float) -> float:
+        """Sigmoid activation function."""
+        return 0.5 * (1 + np.tanh(x / 50.0))
+
     def solve(self, cost_matrix: List[List[float]]) -> Tuple[List[int], float, int]:
         """
-        Solve the assignment problem using the Hopfield algorithm.
+        Solve the assignment problem using a Hopfield network.
         
         Args:
-            cost_matrix: nxn cost matrix where cost_matrix[i][j] is the cost
-                        of assigning worker i to job j.
-        
-        Returns:
-            Tuple with (assignments, total_cost, iterations_used)
-            - assignments: List where assignments[i] is the job assigned to worker i
-            - total_cost: Total cost of the optimal assignment
-            - iterations_used: Number of iterations used
-        """
-        cost_matrix = np.array(cost_matrix, dtype=np.float64)
-        n = cost_matrix.shape[0]
-        
-        if cost_matrix.shape[0] != cost_matrix.shape[1]:
-            raise ValueError("The cost matrix must be square")
-        
-        # Initialize the neuron state matrix
-        # V[i][j] = 1 if worker i is assigned to job j
-        V = np.random.random((n, n))
-        
-        # Algorithm parameters
-        A = 1.0  # Weight for one job per worker constraint
-        B = 1.0  # Weight for one worker per job constraint
-        C = 1.0  # Weight for complete assignment constraint
-        D = 1.0  # Weight for cost minimization
-        
-        # Hopfield network weight matrix
-        W = np.zeros((n*n, n*n))
-        
-        # Build the weight matrix
-        for i in range(n):
-            for j in range(n):
-                for k in range(n):
-                    for l in range(n):
-                        idx1 = i * n + j
-                        idx2 = k * n + l
-                        
-                        # Constraint: each worker must have exactly one job
-                        if i == k and j != l:
-                            W[idx1, idx2] -= A
-                        
-                        # Constraint: each job must have exactly one worker
-                        if j == l and i != k:
-                            W[idx1, idx2] -= B
-                        
-                        # Constraint: complete assignment (n assignments)
-                        W[idx1, idx2] -= C
-                        
-                        # Cost minimization
-                        if i == k and j == l:
-                            W[idx1, idx2] -= D * cost_matrix[i, j]
-        
-        # Thresholds
-        theta = np.zeros(n*n)
-        for i in range(n):
-            for j in range(n):
-                idx = i * n + j
-                theta[idx] = C * n
-        
-        # Update algorithm
-        for iteration in range(self.max_iterations):
-            V_old = V.copy()
+            cost_matrix: nxn cost matrix
             
-            # Update each neuron
-            for i in range(n):
-                for j in range(n):
-                    idx = i * n + j
+        Returns:
+            Tuple containing:
+            - List of assignments (index of job for each worker)
+            - Total cost
+            - Number of iterations
+        """
+        matrix = np.array(cost_matrix)
+        n = matrix.shape[0]
+        
+        # Normalize cost matrix to [0, 1] range for better convergence
+        max_cost = np.max(matrix)
+        if max_cost > 0:
+            norm_matrix = matrix / max_cost
+        else:
+            norm_matrix = matrix
+
+        # Initialize neurons with random values plus noise
+        # u is the internal state, v is the output (activation)
+        u = np.random.normal(0, 0.1, (n, n))
+        v = self._activation(u)
+        
+        iterations = 0
+        prev_v = np.copy(v)
+        
+        # Time step for Euler method
+        dt = 0.01
+        
+        for it in range(self.max_iterations):
+            iterations = it + 1
+            
+            # Compute equations of motion
+            du = np.zeros((n, n))
+            
+            # Sum of activations in each row (minus self)
+            row_sums = np.sum(v, axis=1)
+            # Sum of activations in each col (minus self)
+            col_sums = np.sum(v, axis=0)
+            # Total sum of activations
+            total_sum = np.sum(v)
+            
+            for x in range(n):
+                for i in range(n):
+                    # Constraint 1: One 1 per row
+                    term1 = -self.A * (row_sums[x] - 1)
                     
-                    # Calculate total input
-                    total_input = np.sum(W[idx, :] * V.flatten()) - theta[idx]
+                    # Constraint 2: One 1 per column
+                    term2 = -self.B * (col_sums[i] - 1)
                     
-                    # Sigmoid activation function
-                    V[i, j] = 1.0 / (1.0 + np.exp(-total_input))
+                    # Constraint 3: Total n units active
+                    term3 = -self.C * (total_sum - n)
+                    
+                    # Data term: Minimize cost
+                    term4 = -self.D * norm_matrix[x, i]
+                    
+                    du[x, i] = term1 + term2 + term3 + term4
+            
+            # Update internal state
+            u += du * dt
+            
+            # Update output
+            v = self._activation(u)
             
             # Check convergence
-            if np.max(np.abs(V - V_old)) < self.convergence_threshold:
-                logger.info(f"Convergence reached in {iteration + 1} iterations")
-                break
-        
-        # Convert continuous output to discrete assignments
-        assignments = self._discretize_assignments(V)
-        total_cost = self._calculate_total_cost(assignments, cost_matrix)
-        
-        return assignments, total_cost, iteration + 1
-    
-    def _discretize_assignments(self, V: np.ndarray) -> List[int]:
-        """
-        Convert continuous neuron output to discrete assignments.
-        Uses simplified Hungarian algorithm to guarantee a valid assignment.
-        """
-        n = V.shape[0]
+            diff = np.mean(np.abs(v - prev_v))
+            if diff < self.threshold and it > 100:
+                # Also check if we have a valid permutation matrix (close to 0 or 1)
+                if np.all(np.abs(v * (1 - v)) < 0.1):
+                    break
+            
+            prev_v = np.copy(v)
+            
+        # Discretize result to get permutation matrix
+        # We use a greedy approach on the final activations to ensure valid assignment
         assignments = [-1] * n
+        final_assignments = [-1] * n
+        final_v = np.copy(v)
         
-        # Create a copy of V to modify
-        V_copy = V.copy()
+        # Simple greedy decoding: pick max in row, mask that col, repeat
+        # This ensures we return a valid assignment even if the network didn't fully converge
+        rows_indices = list(range(n))
+        cols_indices = list(range(n))
         
-        for _ in range(n):
-            # Find the maximum remaining value
-            max_val = -np.inf
-            max_i, max_j = -1, -1
-            
-            for i in range(n):
-                for j in range(n):
-                    if assignments[i] == -1 and V_copy[i, j] > max_val:
-                        max_val = V_copy[i, j]
-                        max_i, max_j = i, j
-            
-            # Assign
-            assignments[max_i] = max_j
-            
-            # Mark row and column as used
-            V_copy[max_i, :] = -np.inf
-            V_copy[:, max_j] = -np.inf
+        temp_assignments = []
         
-        return assignments
-    
+        # Create a list of (value, row, col) tuples
+        candidates = []
+        for r in range(n):
+            for c in range(n):
+                candidates.append((final_v[r, c], r, c))
+        
+        # Sort by activation value descending
+        candidates.sort(key=lambda x: x[0], reverse=True)
+        
+        assigned_rows = set()
+        assigned_cols = set()
+        
+        for val, r, c in candidates:
+            if r not in assigned_rows and c not in assigned_cols:
+                assignments[r] = c
+                final_assignments[r] = int(c)
+                assigned_rows.add(r)
+                assigned_cols.add(c)
+                
+        # Fill in any remaining (shouldn't happen if n*n)
+        # But just in case
+        if len(assigned_rows) < n:
+            # Fallback for failed convergence
+            logger.warning("Hopfield network did not converge to a valid permutation.")
+            # Fill missing
+            missing_rows = list(set(range(n)) - assigned_rows)
+            missing_cols = list(set(range(n)) - assigned_cols)
+            for r, c in zip(missing_rows, missing_cols):
+                final_assignments[r] = int(c)
+
+        total_cost = self._calculate_total_cost(final_assignments, matrix)
+        return final_assignments, total_cost, iterations
+
     def _calculate_total_cost(self, assignments: List[int], cost_matrix: np.ndarray) -> float:
-        """Calculate the total cost of the assignment."""
-        total_cost = 0.0
+        """
+        Calculate the total cost of the assignment by summing up the costs of each worker's job.
+        
+        For example, if the cost matrix is [[1, 2], [3, 4]] and the assignments are [0, 1], then the total cost will be
+        1 + 4 = 5.
+        
+        Args:
+            assignments: List of job indices assigned to each worker
+            cost_matrix: nxn cost matrix
+            
+        Returns:
+            Total cost of the assignment
+        """
+        total = 0.0
         for worker, job in enumerate(assignments):
-            total_cost += cost_matrix[worker, job]
-        return total_cost
+            if job != -1:
+                total += cost_matrix[worker, job]
+        return total
 
 
 def solve_assignment_problem(cost_matrix: List[List[float]]) -> dict:
