@@ -1,4 +1,12 @@
 
+## Configuration
+
+The API can be configured using environment variables:
+
+- `PORT` - Port to listen on (default: 8080)
+- `GIN_MODE` - Mode for Gin framework (default: release)
+- `HOPFIELD_SERVICE_URL` - URL of the Hopfield service (default: http://hopfield-service:5000)
+
 ## Deployment
 
 The system can be deployed using Docker Compose:

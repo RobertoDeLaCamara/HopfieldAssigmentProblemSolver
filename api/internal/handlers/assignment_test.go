@@ -2,14 +2,16 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
-	"hopfield-assignment-api/internal/models"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"hopfield-assignment-api/internal/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -57,6 +59,14 @@ func TestAssignmentHandler_SolveAssignment(t *testing.T) {
 			name: "invalid request - non-square matrix",
 			requestBody: models.AssignmentRequest{
 				CostMatrix: [][]float64{{1, 2, 3}, {4, 5, 6}},
+			},
+			expectedStatus: http.StatusBadRequest,
+			expectError:    true,
+		},
+		{
+			name: "invalid request - empty matrix",
+			requestBody: models.AssignmentRequest{
+				CostMatrix: [][]float64{},
 			},
 			expectedStatus: http.StatusBadRequest,
 			expectError:    true,
@@ -162,6 +172,19 @@ func TestAssignmentHandler_SolveBatch(t *testing.T) {
 			expectedStatus: http.StatusBadRequest,
 			expectError:    true,
 		},
+		{
+			name: "batch with invalid problem",
+			requestBody: models.BatchRequest{
+				Problems: []models.BatchProblem{
+					{
+						ID:         "problem_1",
+						CostMatrix: [][]float64{{1, 2, 3}, {4, 5, 6}}, // Non-square matrix
+					},
+				},
+			},
+			expectedStatus: http.StatusOK, // Batch should still return success with error in result
+			expectError:    false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -213,6 +236,12 @@ func TestAssignmentHandler_SolveBatch(t *testing.T) {
 				assert.NoError(t, err)
 				assert.True(t, response.Success)
 				assert.NotEmpty(t, response.Results)
+				
+				// Check that we have the expected number of results
+				if tt.name == "batch with invalid problem" {
+					assert.Len(t, response.Results, 1)
+					assert.False(t, response.Results[0].Success)
+				}
 			}
 
 			// Verify mock expectations
@@ -223,7 +252,7 @@ func TestAssignmentHandler_SolveBatch(t *testing.T) {
 	}
 }
 
-func TestAssignmentHandler_CallHopfieldService(t *testing.T) {
+func TestAssignmentHandler_CallHopfieldServiceWithContext(t *testing.T) {
 	tests := []struct {
 		name           string
 		request        models.AssignmentRequest
@@ -290,8 +319,12 @@ func TestAssignmentHandler_CallHopfieldService(t *testing.T) {
 				mockClient.On("Do", mock.Anything).Return(nil, tt.mockError)
 			}
 
+			// Create context with timeout
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
 			// Call method
-			result, err := handler.callHopfieldService(tt.request)
+			result, err := handler.callHopfieldServiceWithContext(ctx, tt.request)
 
 			// Assertions
 			if tt.expectError {
@@ -309,6 +342,51 @@ func TestAssignmentHandler_CallHopfieldService(t *testing.T) {
 
 			// Verify mock expectations
 			mockClient.AssertExpectations(t)
+		})
+	}
+}
+
+func TestAssignmentHandler_ValidateMatrix(t *testing.T) {
+	tests := []struct {
+		name        string
+		costMatrix  [][]float64
+		expectError bool
+	}{
+		{
+			name:        "valid square matrix",
+			costMatrix:  [][]float64{{1, 2}, {3, 4}},
+			expectError: false,
+		},
+		{
+			name:        "empty matrix",
+			costMatrix:  [][]float64{},
+			expectError: true,
+		},
+		{
+			name:        "non-square matrix",
+			costMatrix:  [][]float64{{1, 2, 3}, {4, 5, 6}},
+			expectError: true,
+		},
+		{
+			name:        "negative cost",
+			costMatrix:  [][]float64{{1, -2}, {3, 4}},
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := models.AssignmentRequest{
+				CostMatrix: tt.costMatrix,
+			}
+			
+			err := req.Validate()
+			
+			if tt.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
 		})
 	}
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// LoggingMiddleware logs HTTP requests
+// LoggingMiddleware logs HTTP requests with detailed information
 func LoggingMiddleware(logger *logrus.Logger) gin.HandlerFunc {
 	return gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
 		logger.WithFields(logrus.Fields{
@@ -19,6 +19,7 @@ func LoggingMiddleware(logger *logrus.Logger) gin.HandlerFunc {
 			"path":        param.Path,
 			"user_agent":  param.Request.UserAgent(),
 			"error":       param.ErrorMessage,
+			"request_id":  param.Request.Header.Get("X-Request-ID"),
 		}).Info("HTTP Request")
 		return ""
 	})

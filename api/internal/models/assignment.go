@@ -1,6 +1,9 @@
 package models
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 // AssignmentRequest represents the request to solve an assignment problem
 type AssignmentRequest struct {
@@ -66,14 +69,14 @@ func (r *AssignmentRequest) Validate() error {
 		if len(row) != n {
 			return &ValidationError{
 				Field:   "cost_matrix",
-				Message: "The cost matrix must be square",
+				Message: fmt.Sprintf("The cost matrix must be square. Row %d has %d elements, expected %d", i, len(row), n),
 			}
 		}
 		for j, cost := range row {
 			if cost < 0 {
 				return &ValidationError{
 					Field:   "cost_matrix",
-					Message: "Costs cannot be negative",
+					Message: fmt.Sprintf("Cost at position [%d][%d] cannot be negative: %f", i, j, cost),
 				}
 			}
 			_ = j // Avoid unused variable warning

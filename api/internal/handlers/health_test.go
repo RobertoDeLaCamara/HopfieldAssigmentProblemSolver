@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"your-module/api/internal/models"
+	"hopfield-assignment-api/internal/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -135,6 +135,10 @@ func TestHealthHandler_CurrentTime(t *testing.T) {
 	timeStr, ok := response["time"].(string)
 	assert.True(t, ok)
 	assert.NotEmpty(t, timeStr)
+	
+	// Verify it's a valid ISO 8601 timestamp
+	_, err = time.Parse(time.RFC3339, timeStr)
+	assert.NoError(t, err)
 }
 
 func TestHealthHandler_AllEndpoints(t *testing.T) {
@@ -184,6 +188,11 @@ func TestHealthHandler_AllEndpoints(t *testing.T) {
 				assert.Contains(t, response, "version")
 			} else {
 				assert.Contains(t, response, "time")
+				// Verify time format
+				timeStr, ok := response["time"].(string)
+				assert.True(t, ok)
+				_, err := time.Parse(time.RFC3339, timeStr)
+				assert.NoError(t, err)
 			}
 		})
 	}

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"hopfield-assignment-api/internal/models"
@@ -41,7 +42,7 @@ func NewAssignmentHandler(logger *logrus.Logger) *AssignmentHandler {
 func (h *AssignmentHandler) SolveAssignment(c *gin.Context) {
 	var req models.AssignmentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		h.logger.WithError(err).Error("Error parsing request")
+		h.logger.WithError(err).Warn("Invalid request format")
 		c.JSON(http.StatusBadRequest, models.APIResponse{
 			Success: false,
 			Error:   "Invalid request format: " + err.Error(),
@@ -51,7 +52,7 @@ func (h *AssignmentHandler) SolveAssignment(c *gin.Context) {
 
 	// Validate the cost matrix
 	if err := req.Validate(); err != nil {
-		h.logger.WithError(err).Error("Validation error")
+		h.logger.WithError(err).Warn("Validation error")
 		c.JSON(http.StatusBadRequest, models.APIResponse{
 			Success: false,
 			Error:   err.Error(),
@@ -59,8 +60,11 @@ func (h *AssignmentHandler) SolveAssignment(c *gin.Context) {
 		return
 	}
 
-	// Call the Hopfield service
-	result, err := h.callHopfieldService(req)
+	// Call the Hopfield service with context for timeout control
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
+	defer cancel()
+
+	result, err := h.callHopfieldServiceWithContext(ctx, req)
 	if err != nil {
 		h.logger.WithError(err).Error("Error calling Hopfield service")
 		c.JSON(http.StatusInternalServerError, models.APIResponse{
@@ -80,7 +84,7 @@ func (h *AssignmentHandler) SolveAssignment(c *gin.Context) {
 func (h *AssignmentHandler) SolveBatch(c *gin.Context) {
 	var req models.BatchRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		h.logger.WithError(err).Error("Error parsing batch request")
+		h.logger.WithError(err).Warn("Error parsing batch request")
 		c.JSON(http.StatusBadRequest, models.APIResponse{
 			Success: false,
 			Error:   "Invalid request format: " + err.Error(),
@@ -96,7 +100,7 @@ func (h *AssignmentHandler) SolveBatch(c *gin.Context) {
 		return
 	}
 
-	// Process each problem
+	// Process each problem with timeout
 	results := make([]models.BatchResult, 0, len(req.Problems))
 	for _, problem := range req.Problems {
 		assignmentReq := models.AssignmentRequest{
@@ -113,8 +117,11 @@ func (h *AssignmentHandler) SolveBatch(c *gin.Context) {
 			continue
 		}
 
-		// Solve the problem
-		result, err := h.callHopfieldService(assignmentReq)
+		// Solve the problem with timeout
+		ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
+		defer cancel()
+
+		result, err := h.callHopfieldServiceWithContext(ctx, assignmentReq)
 		if err != nil {
 			results = append(results, models.BatchResult{
 				ID:      problem.ID,
@@ -137,16 +144,16 @@ func (h *AssignmentHandler) SolveBatch(c *gin.Context) {
 	})
 }
 
-// callHopfieldService calls the Python service to solve the problem
-func (h *AssignmentHandler) callHopfieldService(req models.AssignmentRequest) (*models.AssignmentResponse, error) {
+// callHopfieldServiceWithContext calls the Python service to solve the problem with context
+func (h *AssignmentHandler) callHopfieldServiceWithContext(ctx context.Context, req models.AssignmentRequest) (*models.AssignmentResponse, error) {
 	// Prepare the request
 	reqBody, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("error serializing request: %w", err)
 	}
 
-	// Create the HTTP request
-	httpReq, err := http.NewRequest("POST", h.hopfieldURL+"/solve", bytes.NewBuffer(reqBody))
+	// Create the HTTP request with context
+	httpReq, err := http.NewRequestWithContext(ctx, "POST", h.hopfieldURL+"/solve", bytes.NewBuffer(reqBody))
 	if err != nil {
 		return nil, fmt.Errorf("error creating HTTP request: %w", err)
 	}
