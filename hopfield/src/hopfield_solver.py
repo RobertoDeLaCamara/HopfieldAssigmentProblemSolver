@@ -37,7 +37,13 @@ class HopfieldAssignmentSolver:
 
     def _activation(self, x: float) -> float:
         """Sigmoid activation function."""
-        return 0.5 * (1 + np.tanh(x / 50.0))
+        # Using a numerically stable sigmoid
+        if x >= 0:
+            z = np.exp(-x)
+            return 1 / (1 + z)
+        else:
+            z = np.exp(x)
+            return z / (1 + z)
 
     def solve(self, cost_matrix: List[List[float]]) -> Tuple[List[int], float, int]:
         """
@@ -52,8 +58,35 @@ class HopfieldAssignmentSolver:
             - Total cost
             - Number of iterations
         """
-        matrix = np.array(cost_matrix)
-        n = matrix.shape[0]
+        # Validate input
+        if not cost_matrix or not cost_matrix[0]:
+            raise ValueError("Cost matrix cannot be empty")
+            
+        n_rows = len(cost_matrix)
+        n_cols = len(cost_matrix[0])
+        
+        # Handle rectangular matrices by padding with zeros or using appropriate approach
+        if n_rows != n_cols:
+            logger.warning(f"Rectangular matrix detected: {n_rows}x{n_cols}. Using square approximation.")
+            # For assignment problems, we typically need square matrices
+            # We'll use the smaller dimension for now
+            n = min(n_rows, n_cols)
+            # Truncate or pad to make it square
+            if n_rows < n_cols:
+                # Truncate columns
+                matrix = [row[:n] for row in cost_matrix]
+            else:
+                # Truncate rows and pad columns with zeros
+                matrix = [row[:n] for row in cost_matrix[:n]]
+                # Pad remaining rows with zeros
+                while len(matrix) < n:
+                    matrix.append([0.0] * n)
+        else:
+            n = n_rows
+            matrix = cost_matrix
+            
+        # Convert to numpy array
+        matrix = np.array(matrix)
         
         # Normalize cost matrix to [0, 1] range for better convergence
         max_cost = np.max(matrix)
