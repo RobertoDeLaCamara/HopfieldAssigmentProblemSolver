@@ -1,12 +1,13 @@
 package main
 
 import (
-	"hopfield-assignment-api/internal/handlers"
-	"hopfield-assignment-api/pkg/middleware"
+	"net/http"
 	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"your-module/api/internal/handlers"
+	"your-module/api/pkg/middleware"
 )
 
 func main() {
@@ -20,47 +21,35 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	// Create router
-	router := gin.New()
-
-	// Middleware
-	router.Use(middleware.CORS())
+	// Setup routes
+	router := gin.Default()
+	
+	// Add logging middleware
 	router.Use(middleware.LoggingMiddleware(logger))
-	router.Use(gin.Recovery())
 
-	// Create handlers
+	// Add CORS middleware
+	router.Use(middleware.CORS())
+
+	// Health endpoints
 	healthHandler := handlers.NewHealthHandler(logger)
-	assignmentHandler := handlers.NewAssignmentHandler(logger)
-
-	// Health routes
 	router.GET("/health", healthHandler.HealthCheck)
 	router.GET("/health/ready", healthHandler.ReadinessCheck)
 	router.GET("/health/live", healthHandler.LivenessCheck)
+	router.GET("/time", healthHandler.CurrentTime)
 
-	// API routes
-	api := router.Group("/api/v1")
-	{
-		api.POST("/solve", assignmentHandler.SolveAssignment)
-		api.POST("/solve/batch", assignmentHandler.SolveBatch)
-	}
+	// Assignment endpoints (without hopfield dependency)
+	assignmentHandler := handlers.NewAssignmentHandler(logger)
+	router.POST("/solve", assignmentHandler.SolveAssignment)
+	router.POST("/solve/batch", assignmentHandler.SolveBatch)
 
-	// Root route
-	router.GET("/", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"service": "Hopfield Assignment Problem Solver",
-			"version": "1.0.0",
-			"status":  "running",
-		})
-	})
-
-	// Get port
+	// Start server
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
-
-	logger.WithField("port", port).Info("Starting server")
+	
+	logger.Infof("Starting server on port %s", port)
 	if err := router.Run(":" + port); err != nil {
-		logger.WithError(err).Fatal("Error starting server")
+		logger.WithError(err).Fatal("Failed to start server")
 	}
 }
