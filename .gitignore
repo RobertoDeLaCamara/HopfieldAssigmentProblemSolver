@@ -1,4 +1,18 @@
-# Binarios
+# IDE and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Build artifacts and binaries
 *.exe
 *.exe~
 *.dll
@@ -6,44 +20,110 @@
 *.dylib
 *.test
 *.out
+main
+api/main
 
-# Archivos de Go
+# Go specific
 vendor/
-go.sum
 
-# Archivos de Python
+# Note: go.sum should be committed for reproducible builds
+# Only ignore vendor directory
+
+# Python specific
 __pycache__/
 *.py[cod]
 *$py.class
-*.so
 .Python
+*.so
+
+# Virtual environments
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+.venv/
 
-# IDEs
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+# Testing and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+.hypothesis/
+coverage.xml
+*.coveragerc
+.tox/
+.nox/
+pytest_tmp/
+.pytest_tmp/
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pytype/
 
 # Logs
 *.log
+logs/
 
-# Archivos temporales
+# Temporary files
 *.tmp
 *.temp
+.cache/
 
-# Docker
-.dockerignore
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets/
 
-# OS
-.DS_Store
-Thumbs.db
+# Note: .dockerignore should be committed
+# Docker runtime files
+docker-compose.override.yml
+
+# Backup files
+*.bak
+*.backup
+backup-*.tar.gz
+
+# AI assistants
 .aider*
-.env
-.env
-.env
+.cursor/
+.roo/
+.gemini/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Node modules (if added in future)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+.eggs/
+*.whl
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# macOS
+.AppleDouble
+.LSOverride
+
+# Windows
+ehthumbs.db
+$RECYCLE.BIN/
+
+# Linux
+.directory
+.Trash-*

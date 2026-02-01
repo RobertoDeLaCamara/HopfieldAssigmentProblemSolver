@@ -3,8 +3,6 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Go Version](https://img.shields.io/badge/go-1.21+-blue.svg)](https://golang.org/)
 [![Python Version](https://img.shields.io/badge/python-3.11+-blue.svg)](https://python.org/)
-[![Tests](https://img.shields.io/badge/tests-29%20passed-brightgreen.svg)]()
-[![Integration Tests](https://img.shields.io/badge/integration-13%20passed-brightgreen.svg)]()
 
 A high-performance API service for solving assignment problems using Hopfield neural networks. The system consists of a Go-based API gateway that interfaces with a Python-based Hopfield solver service, all containerized with Docker for easy deployment.
 

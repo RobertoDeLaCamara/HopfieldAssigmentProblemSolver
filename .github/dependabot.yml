@@ -1,0 +1,57 @@
+version: 2
+updates:
+  # Update GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "github-actions"
+  
+  # Update Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/hopfield"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "python"
+    # Separate pull requests for dev dependencies
+    groups:
+      production-dependencies:
+        dependency-type: "production"
+      development-dependencies:
+        dependency-type: "development"
+    # Only create PRs for major/minor updates, not patch
+    versioning-strategy: increase
+  
+  # Update Go dependencies
+  - package-ecosystem: "gomod"
+    directory: "/api"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "golang"
+    groups:
+      go-dependencies:
+        patterns:
+          - "*"
+  
+  # Update Docker base images
+  - package-ecosystem: "docker"
+    directory: "/hopfield"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "docker"
+  
+  - package-ecosystem: "docker"
+    directory: "/api"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "docker"

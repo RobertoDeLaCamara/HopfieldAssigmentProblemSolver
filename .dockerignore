@@ -1,0 +1,81 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+
+# Documentation
+README.md
+CHANGELOG.md
+CONTRIBUTING.md
+LICENSE
+*.md
+docs/
+
+# Tests
+tests/
+*_test.go
+test_*.py
+**/__pycache__/
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Development files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.*
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# Go
+vendor/
+*.sum
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Backup files
+*.bak
+*.backup
+backup-*.tar.gz
+
+# AI assistants
+.aider*
+.cursor/
+.roo/
+
+# Build artifacts (if you have local binaries)
+main
+*.exe
+*.dll
+*.dylib

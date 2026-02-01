@@ -1,6 +1,13 @@
 import pytest
 import numpy as np
+import sys
+import os
+
+# Add src directory to path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+
 from hopfield_solver import HopfieldAssignmentSolver, solve_assignment_problem
+
 
 class TestHopfieldAssignmentSolver:
     def test_initialization(self):
