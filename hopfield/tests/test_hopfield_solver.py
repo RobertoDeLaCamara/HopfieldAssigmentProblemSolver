@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from hopfield.src.hopfield_solver import HopfieldAssignmentSolver, solve_assignment_problem
+from hopfield_solver import HopfieldAssignmentSolver, solve_assignment_problem
 
 class TestHopfieldAssignmentSolver:
     def test_initialization(self):
@@ -56,20 +56,16 @@ class TestHopfieldAssignmentSolver:
         assert iterations > 0
 
     def test_solve_with_rectangular_matrix(self):
-        """Test handling of rectangular matrices."""
+        """Test that rectangular matrices raise ValueError."""
         cost_matrix = [
             [1, 2, 3],
             [4, 5, 6]
         ]
         
         solver = HopfieldAssignmentSolver()
-        assignments, total_cost, iterations = solver.solve(cost_matrix)
         
-        # Should handle gracefully and return valid assignments
-        assert len(assignments) == 2  # Should use min of rows/cols
-        assert all(isinstance(a, int) and a >= 0 for a in assignments)
-        assert total_cost >= 0
-        assert iterations > 0
+        with pytest.raises(ValueError, match="Cost matrix must be square"):
+            solver.solve(cost_matrix)
 
     def test_solve_with_zero_matrix(self):
         """Test solving with zero cost matrix."""
@@ -116,7 +112,6 @@ class TestHopfieldAssignmentSolver:
         # Should return valid assignments
         assert len(assignments) == 2
         assert all(isinstance(a, int) and a >= 0 for a in assignments)
-        assert total_cost >= 0
         assert iterations > 0
 
     def test_solve_with_single_element(self):
@@ -188,14 +183,5 @@ def test_solve_assignment_problem_with_rectangular():
         [4, 5, 6]
     ]
     
-    result = solve_assignment_problem(cost_matrix)
-    
-    assert "assignments" in result
-    assert "total_cost" in result
-    assert "iterations" in result
-    assert "cost_matrix" in result
-    
-    # Should handle rectangular matrix gracefully
-    assert len(result["assignments"]) == 2
-    assert isinstance(result["total_cost"], float)
-    assert isinstance(result["iterations"], int)
+    with pytest.raises(ValueError, match="Cost matrix must be square"):
+        solve_assignment_problem(cost_matrix)

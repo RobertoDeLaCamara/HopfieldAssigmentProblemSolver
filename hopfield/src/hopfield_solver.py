@@ -35,15 +35,31 @@ class HopfieldAssignmentSolver:
     def _kronecker_delta(self, i: int, j: int) -> int:
         return 1 if i == j else 0
 
-    def _activation(self, x: float) -> float:
+    def _activation(self, x) -> float:
         """Sigmoid activation function."""
-        # Using a numerically stable sigmoid
-        if x >= 0:
-            z = np.exp(-x)
-            return 1 / (1 + z)
+        # Using a numerically stable sigmoid for scalars and arrays
+        if np.isscalar(x):
+            if x >= 0:
+                z = np.exp(-x)
+                return 1 / (1 + z)
+            else:
+                z = np.exp(x)
+                return z / (1 + z)
         else:
-            z = np.exp(x)
-            return z / (1 + z)
+            # Handle arrays element-wise
+            result = np.zeros_like(x, dtype=float)
+            pos_mask = x >= 0
+            neg_mask = ~pos_mask
+            
+            # Positive values
+            z_pos = np.exp(-x[pos_mask])
+            result[pos_mask] = 1 / (1 + z_pos)
+            
+            # Negative values
+            z_neg = np.exp(x[neg_mask])
+            result[neg_mask] = z_neg / (1 + z_neg)
+            
+            return result
 
     def solve(self, cost_matrix: List[List[float]]) -> Tuple[List[int], float, int]:
         """
@@ -65,25 +81,12 @@ class HopfieldAssignmentSolver:
         n_rows = len(cost_matrix)
         n_cols = len(cost_matrix[0])
         
-        # Handle rectangular matrices by padding with zeros or using appropriate approach
+        # Check if matrix is square
         if n_rows != n_cols:
-            logger.warning(f"Rectangular matrix detected: {n_rows}x{n_cols}. Using square approximation.")
-            # For assignment problems, we typically need square matrices
-            # We'll use the smaller dimension for now
-            n = min(n_rows, n_cols)
-            # Truncate or pad to make it square
-            if n_rows < n_cols:
-                # Truncate columns
-                matrix = [row[:n] for row in cost_matrix]
-            else:
-                # Truncate rows and pad columns with zeros
-                matrix = [row[:n] for row in cost_matrix[:n]]
-                # Pad remaining rows with zeros
-                while len(matrix) < n:
-                    matrix.append([0.0] * n)
-        else:
-            n = n_rows
-            matrix = cost_matrix
+            raise ValueError(f"Cost matrix must be square, got {n_rows}x{n_cols}")
+            
+        n = n_rows
+        matrix = cost_matrix
             
         # Convert to numpy array
         matrix = np.array(matrix)

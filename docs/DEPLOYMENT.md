@@ -36,7 +36,7 @@ docker-compose ps
 curl http://localhost:8080/health
 
 # Test problem solving
-curl -X POST http://localhost:8080/api/v1/solve \
+curl -X POST http://localhost:8080/solve \
   -H "Content-Type: application/json" \
   -d '{"cost_matrix": [[1,2],[3,4]]}'
 ```

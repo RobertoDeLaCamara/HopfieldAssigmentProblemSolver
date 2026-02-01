@@ -4,6 +4,7 @@ FROM python:3.11-slim
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Establecer directorio de trabajo
@@ -17,6 +18,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copiar código fuente
 COPY src/ ./src/
+COPY tests/ ./tests/
 
 # Establecer PYTHONPATH
 ENV PYTHONPATH=/app/src

@@ -61,6 +61,18 @@ test: ## Run tests
 	$(DOCKER_COMPOSE) exec hopfield-service python -m pytest tests/ -v
 	$(DOCKER_COMPOSE) exec api-gateway go test ./...
 
+test-unit: ## Run unit tests only
+	@echo "$(GREEN)Running unit tests...$(NC)"
+	$(DOCKER_COMPOSE) exec hopfield-service python -m pytest tests/ -v --tb=short
+
+test-integration: ## Run integration tests only
+	@echo "$(GREEN)Running integration tests...$(NC)"
+	python3 -m pytest tests/integration_test.py -v
+
+test-coverage: ## Run tests with coverage
+	@echo "$(GREEN)Running tests with coverage...$(NC)"
+	$(DOCKER_COMPOSE) exec hopfield-service python -m pytest tests/ --cov=src --cov-report=html --cov-report=term
+
 test-local: ## Run tests locally (without Docker)
 	@echo "$(GREEN)Running tests locally...$(NC)"
 	cd hopfield && $(PYTHON) -m pytest tests/ -v
@@ -93,7 +105,7 @@ health: ## Check service health
 
 test-api: ## Test the API with an example
 	@echo "$(GREEN)Testing the API...$(NC)"
-	@curl -X POST http://localhost:8080/api/v1/solve \
+	@curl -X POST http://localhost:8080/solve \
 		-H "Content-Type: application/json" \
 		-d '{"cost_matrix": [[1,2],[3,4]]}' | jq .
 

@@ -10,8 +10,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"hopfield-assignment-api/api/internal/handlers"
-	"hopfield-assignment-api/api/pkg/middleware"
+	"hopfield-assignment-api/internal/handlers"
+	"hopfield-assignment-api/pkg/middleware"
 )
 
 func main() {

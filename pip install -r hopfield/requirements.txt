@@ -1,4 +1,0 @@
-
-### Running Locally
-
-#### Start the Hopfield Service (Python)

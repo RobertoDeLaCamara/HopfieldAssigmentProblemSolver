@@ -4,6 +4,16 @@
 
 The Hopfield Assignment Problem Solver service exposes a REST API to solve optimal assignment problems using Hopfield neural networks.
 
+## Base URLs
+
+The API is accessible through different endpoints depending on your deployment:
+
+- **Direct API Gateway** (development): `http://localhost:8080`
+- **Through Nginx** (production): `http://localhost/api/`
+- **HTTPS** (production with SSL): `https://localhost/api/`
+
+All examples in this documentation use the direct API Gateway URL. For production deployments, prepend `/api/` to all paths.
+
 ## Endpoints
 
 ### Service Health
@@ -28,7 +38,7 @@ Checks if the service is alive.
 
 ### Assignment Problem Solving
 
-#### POST /api/v1/solve
+#### POST /solve
 Solves an individual assignment problem.
 
 **Request Body:**
@@ -69,7 +79,7 @@ Solves an individual assignment problem.
 }
 ```
 
-#### POST /api/v1/solve/batch
+#### POST /solve/batch
 Solves multiple assignment problems in batch.
 
 **Request Body:**
@@ -147,8 +157,19 @@ Solves multiple assignment problems in batch.
 ### cURL
 
 ```bash
-# Solve a simple problem
-curl -X POST http://localhost:8080/api/v1/solve \
+# Solve a simple problem (direct access)
+curl -X POST http://localhost:8080/solve \
+  -H "Content-Type: application/json" \
+  -d '{
+    "cost_matrix": [
+      [1, 2, 3],
+      [4, 5, 6],
+      [7, 8, 9]
+    ]
+  }'
+
+# Solve a simple problem (through Nginx)
+curl -X POST http://localhost/api/solve \
   -H "Content-Type: application/json" \
   -d '{
     "cost_matrix": [
@@ -168,8 +189,9 @@ curl http://localhost:8080/health
 import requests
 import json
 
-# Configure base URL
-base_url = "http://localhost:8080"
+# Configure base URLs
+direct_base_url = "http://localhost:8080"  # Direct API Gateway access
+nginx_base_url = "http://localhost/api"    # Through Nginx
 
 # Solve a problem
 cost_matrix = [
@@ -180,7 +202,7 @@ cost_matrix = [
 ]
 
 response = requests.post(
-    f"{base_url}/api/v1/solve",
+    f"{direct_base_url}/solve",  # or nginx_base_url + "/solve"
     json={"cost_matrix": cost_matrix}
 )
 
@@ -195,9 +217,11 @@ else:
 ### JavaScript
 
 ```javascript
-const solveAssignment = async (costMatrix) => {
+const solveAssignment = async (costMatrix, useNginx = false) => {
+  const baseUrl = useNginx ? 'http://localhost/api' : 'http://localhost:8080';
+  
   try {
-    const response = await fetch('http://localhost:8080/api/v1/solve', {
+    const response = await fetch(`${baseUrl}/solve`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -225,7 +249,11 @@ const costMatrix = [
   [7, 8, 9]
 ];
 
-solveAssignment(costMatrix);
+// Direct access
+solveAssignment(costMatrix, false);
+
+// Through Nginx
+solveAssignment(costMatrix, true);
 ```
 
 ## Monitoring and Logs

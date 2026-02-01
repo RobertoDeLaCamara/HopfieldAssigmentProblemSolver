@@ -6,6 +6,7 @@ from flask import Flask, request, jsonify
 import logging
 from hopfield_solver import solve_assignment_problem
 import traceback
+from werkzeug.exceptions import BadRequest
 
 app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -43,12 +44,12 @@ def solve_assignment():
     try:
         data = request.get_json()
         
-        if not data:
+        if data is None:
             return jsonify({
                 "success": False,
                 "error": "No JSON provided in request body"
             }), 400
-        
+            
         if 'cost_matrix' not in data:
             return jsonify({
                 "success": False,
@@ -88,6 +89,13 @@ def solve_assignment():
             "result": result
         })
         
+    except BadRequest as e:
+        logger.error(f"Bad request: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": "Invalid JSON format"
+        }), 400
+        
     except Exception as e:
         logger.error(f"Error solving assignment problem: {str(e)}")
         logger.error(traceback.format_exc())
@@ -124,6 +132,19 @@ def solve_batch():
             }), 400
         
         problems = data['problems']
+        
+        if not isinstance(problems, list):
+            return jsonify({
+                "success": False,
+                "error": "Field 'problems' must be a list"
+            }), 400
+            
+        if len(problems) == 0:
+            return jsonify({
+                "success": False,
+                "error": "Problems list cannot be empty"
+            }), 400
+        
         results = []
         
         for problem in problems:
@@ -153,6 +174,13 @@ def solve_batch():
             "success": True,
             "results": results
         })
+        
+    except BadRequest as e:
+        logger.error(f"Bad request: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": "Invalid JSON format"
+        }), 400
         
     except Exception as e:
         logger.error(f"Error in batch processing: {str(e)}")

@@ -87,9 +87,7 @@ class TestSolveEndpoint:
         """Test without cost matrix."""
         data = {}
         
-        response = client.post('/solve',
-                             data=json.dumps(data),
-                             content_type='application/json')
+        response = client.post('/solve', json=data)
         
         assert response.status_code == 400
         result = json.loads(response.data)

@@ -43,3 +43,7 @@ venv.bak/
 # OS
 .DS_Store
 Thumbs.db
+.aider*
+.env
+.env
+.env

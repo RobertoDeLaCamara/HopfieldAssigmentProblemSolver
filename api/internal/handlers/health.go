@@ -5,7 +5,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"your-module/api/internal/models"
+	"github.com/sirupsen/logrus"
+	"hopfield-assignment-api/internal/models"
 )
 
 type HealthHandler struct {
@@ -21,7 +22,7 @@ func NewHealthHandler(logger *logrus.Logger) *HealthHandler {
 func (h *HealthHandler) HealthCheck(c *gin.Context) {
 	response := models.HealthResponse{
 		Status:  "healthy",
-		Service: "assignment-api",
+		Service: "hopfield-assignment-api",
 		Version: "1.0.0",
 	}
 
