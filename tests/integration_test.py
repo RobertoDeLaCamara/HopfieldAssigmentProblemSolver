@@ -182,7 +182,7 @@ class TestSystemIntegration:
     
     def test_error_handling_invalid_matrix(self):
         """Test error handling with invalid matrix."""
-        data = {"cost_matrix": [[1, 2, 3], [4, 5, 6]]}  # No cuadrada
+        data = {"cost_matrix": [[1, 2, 3], [4, 5, 6]]}  # Not square
         
         response = requests.post(
             f"{self.api_base_url}/api/v1/solve",
@@ -252,7 +252,7 @@ class TestSystemIntegration:
         
         # Verify that the algorithm converged in a reasonable number of iterations
         iterations = result["result"]["iterations"]
-        assert iterations < 1000  # Debería converger rápidamente
+        assert iterations < 1000  # Should converge rapidly
     
     def test_concurrent_requests(self):
         """Test concurrent requests."""
