@@ -2,6 +2,8 @@
 Integration tests for the complete system.
 """
 
+import os
+
 import pytest
 import requests
 import time
@@ -11,12 +13,12 @@ from typing import Dict, Any
 
 class TestSystemIntegration:
     """Integration tests for the complete system."""
-    
+
     @pytest.fixture(autouse=True)
     def setup(self):
         """Setup before each test."""
-        self.api_base_url = "http://localhost:8080"
-        self.hopfield_base_url = "http://localhost:5000"
+        self.api_base_url = os.environ.get("API_BASE_URL", "http://localhost:8080")
+        self.hopfield_base_url = os.environ.get("HOPFIELD_BASE_URL", "http://localhost:5000")
         self.timeout = 30
         
         # Wait for services to be ready

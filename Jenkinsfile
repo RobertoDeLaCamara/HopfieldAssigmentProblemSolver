@@ -111,6 +111,7 @@ pipeline {
         stage('Integration Tests') {
             steps {
                 sh '''
+                    docker compose down -v 2>/dev/null || true
                     docker compose up -d --build hopfield-service api-gateway
 
                     echo "Waiting for services to be healthy..."
@@ -127,9 +128,14 @@ pipeline {
                         done
                     '
                     echo "API Gateway: healthy"
-                '''
-                sh '''
-                    docker run --rm --network host \
+
+                    NETWORK=$(docker inspect hopfield-assignment-solver --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}')
+                    echo "Using network: ${NETWORK}"
+
+                    docker run --rm \
+                        --network "${NETWORK}" \
+                        -e API_BASE_URL=http://hopfield-api-gateway:8080 \
+                        -e HOPFIELD_BASE_URL=http://hopfield-assignment-solver:5000 \
                         -v "${WORKSPACE}/tests:/tests" \
                         -v "${WORKSPACE}/reports:/reports" \
                         python:3.11-slim sh -c '
