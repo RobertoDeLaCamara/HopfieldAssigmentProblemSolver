@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -11,9 +12,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"hopfield-assignment-api/internal/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"hopfield-assignment-api/internal/models"
 )
 
 // MockHTTPClient es un mock del cliente HTTP
@@ -23,6 +24,9 @@ type MockHTTPClient struct {
 
 func (m *MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	args := m.Called(req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
 	return args.Get(0).(*http.Response), args.Error(1)
 }
 
@@ -402,22 +406,22 @@ func createMockAssignmentResponse() models.AssignmentResponse {
 	}
 }
 
-func createMockResponseBody(t *testing.T, success bool, result interface{}) *bytes.Buffer {
+func createMockResponseBody(t *testing.T, success bool, result interface{}) io.ReadCloser {
 	response := models.APIResponse{
 		Success: success,
 		Result:  result,
 	}
 	jsonData, err := json.Marshal(response)
 	assert.NoError(t, err)
-	return bytes.NewBuffer(jsonData)
+	return io.NopCloser(bytes.NewBuffer(jsonData))
 }
 
-func createMockErrorResponseBody(t *testing.T, errorMsg string) *bytes.Buffer {
+func createMockErrorResponseBody(t *testing.T, errorMsg string) io.ReadCloser {
 	response := models.APIResponse{
 		Success: false,
 		Error:   errorMsg,
 	}
 	jsonData, err := json.Marshal(response)
 	assert.NoError(t, err)
-	return bytes.NewBuffer(jsonData)
+	return io.NopCloser(bytes.NewBuffer(jsonData))
 }

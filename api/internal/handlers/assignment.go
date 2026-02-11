@@ -15,11 +15,16 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// HTTPDoer is an interface for making HTTP requests (allows mocking in tests)
+type HTTPDoer interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
 // AssignmentHandler handles requests related to the assignment problem
 type AssignmentHandler struct {
-	logger     *logrus.Logger
+	logger      *logrus.Logger
 	hopfieldURL string
-	httpClient *http.Client
+	httpClient  HTTPDoer
 }
 
 // NewAssignmentHandler creates a new instance of the handler

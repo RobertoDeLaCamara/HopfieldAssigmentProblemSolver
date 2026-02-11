@@ -23,7 +23,7 @@ pipeline {
                                 -v "${WORKSPACE}:/workspace" -w /workspace/hopfield \
                                 python:3.11-slim sh -c '
                                     pip install --quiet --no-cache-dir flake8 black isort &&
-                                    flake8 src/ --max-line-length=88 --extend-ignore=E203 &&
+                                    flake8 src/ --max-line-length=88 --extend-ignore=E203,W503 &&
                                     black --check src/ &&
                                     isort --check-only src/
                                 '
