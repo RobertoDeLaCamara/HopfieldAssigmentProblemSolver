@@ -111,8 +111,8 @@ pipeline {
         stage('Integration Tests') {
             steps {
                 sh '''
-                    docker compose down -v 2>/dev/null || true
-                    docker compose up -d --build hopfield-service api-gateway
+                    docker compose -f docker-compose.ci.yml down -v 2>/dev/null || true
+                    docker compose -f docker-compose.ci.yml up -d --build
 
                     echo "Waiting for services to be healthy..."
                     timeout 120 sh -c '
@@ -147,11 +147,11 @@ pipeline {
             }
             post {
                 always {
-                    sh 'docker compose down -v || true'
+                    sh 'docker compose -f docker-compose.ci.yml down -v || true'
                     junit allowEmptyResults: true, testResults: 'reports/integration-junit.xml'
                 }
                 failure {
-                    sh 'docker compose logs --tail=100 || true'
+                    sh 'docker compose -f docker-compose.ci.yml logs --tail=100 || true'
                 }
             }
         }
