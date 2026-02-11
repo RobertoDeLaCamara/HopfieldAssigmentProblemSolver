@@ -1,13 +1,15 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"hopfield-assignment-api/internal/models"
 	"github.com/stretchr/testify/assert"
+	"hopfield-assignment-api/internal/models"
 )
 
 func TestHealthHandler_HealthCheck(t *testing.T) {

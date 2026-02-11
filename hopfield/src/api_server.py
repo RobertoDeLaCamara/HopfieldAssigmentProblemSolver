@@ -93,8 +93,7 @@ def solve_assignment():
                             {
                                 "success": False,
                                 "error": (
-                                    f"Cost at position [{i}][{j}]"
-                                    " must be a number"
+                                    f"Cost at position [{i}][{j}]" " must be a number"
                                 ),
                             }
                         ),

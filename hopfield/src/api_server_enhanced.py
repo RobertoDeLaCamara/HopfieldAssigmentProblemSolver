@@ -12,9 +12,14 @@ from flask import Flask, g, jsonify, request
 from hopfield_solver import solve_assignment_problem
 from logging_config import generate_request_id, setup_logging
 from metrics import metrics, track_request
+
 # Import our new modules
-from validation import (ValidationError, get_validation_summary, validate_batch_request,
-                        validate_cost_matrix)
+from validation import (
+    ValidationError,
+    get_validation_summary,
+    validate_batch_request,
+    validate_cost_matrix,
+)
 from werkzeug.exceptions import BadRequest
 
 # Initialize Flask app

@@ -25,7 +25,7 @@ pipeline {
                                     pip install --quiet --no-cache-dir flake8 black isort &&
                                     flake8 src/ --max-line-length=88 --extend-ignore=E203,W503 &&
                                     black --check src/ &&
-                                    isort --check-only src/
+                                    isort --profile black --check-only src/
                                 '
                         '''
                     }
