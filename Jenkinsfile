@@ -35,8 +35,8 @@ pipeline {
                         sh '''
                             docker run --rm \
                                 -v "${WORKSPACE}:/workspace" -w /workspace/api \
-                                golangci/golangci-lint:v1.55.2 sh -c '
-                                    go mod download &&
+                                golangci/golangci-lint:v1.61-alpine sh -c '
+                                    go build ./... &&
                                     golangci-lint run ./...
                                 '
                         '''
