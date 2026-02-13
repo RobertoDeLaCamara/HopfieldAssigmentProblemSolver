@@ -5,9 +5,6 @@ pipeline {
         REGISTRY = "192.168.1.86:5000"
         PYTHON_IMAGE = "hopfield-solver"
         GO_IMAGE = "hopfield-api"
-    }
-
-    environment {
         // Bypass proxy for local network and registry
         NO_PROXY = 'localhost,127.0.0.1,192.168.1.0/24,192.168.1.86,192.168.1.62'
         no_proxy = 'localhost,127.0.0.1,192.168.1.0/24,192.168.1.86,192.168.1.62'
