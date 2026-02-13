@@ -311,3 +311,6 @@ See [CHANGELOG.md](CHANGELOG.md) for a complete list of changes and version hist
 ---
 
 **Happy optimizing! 🎯**
+
+## CI/CD Status
+Verified on 2026-02-13: Pipeline enabled.
