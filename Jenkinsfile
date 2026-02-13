@@ -14,14 +14,13 @@ pipeline {
             }
         }
 
-/*
         stage('Python Tests') {
             steps {
-                echo 'Skipping Python Solver tests to debug Push stage...'
-                // sh 'docker run --rm -v $(pwd)/hopfield:/app -w /app python:3.11 sh -c "pip install -r requirements.txt && pytest tests/ || echo \"Tests failed\""'
+                echo 'Running Python Solver tests...'
+                // Intentamos correr los tests en un contenedor temporal
+                sh 'docker run --rm -v $(pwd)/hopfield:/app -w /app python:3.11 sh -c "pip install -r requirements.txt && pytest tests/ || echo \"Tests failed but continuing build for testing purposes\""'
             }
         }
-*/
 
         stage('Docker Build & Push') {
             steps {
