@@ -1,5 +1,5 @@
-Flask==3.0.2
-numpy==1.26.4
-gunicorn==21.2.0
-pydantic==2.6.0
-python-dotenv==1.0.1
+Flask==3.1.2
+numpy==2.4.2
+gunicorn==25.1.0
+pydantic==2.12.5
+python-dotenv==1.2.1
