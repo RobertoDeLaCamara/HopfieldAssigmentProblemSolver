@@ -34,28 +34,27 @@ pipeline {
             parallel {
                 stage('Lint Python') {
                     steps {
-                        sh """
-                        docker run --rm --user root \
-                            ${REGISTRY}/${SOLVER_IMAGE}:${env.BUILD_NUMBER} \
-                            sh -c 'pip install --quiet flake8 && flake8 src/ --max-line-length=120 --count --statistics'
-                        """
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                            sh '''
+                            docker run --rm \
+                                -v "$WORKSPACE/hopfield:/app" \
+                                -w /app \
+                                python:3.11-slim \
+                                sh -c "pip install --quiet flake8 && flake8 src/ --max-line-length=120 --count --statistics"
+                            '''
+                        }
                     }
                 }
 
                 stage('Lint Go') {
                     steps {
-                        sh """
+                        sh '''
                         docker run --rm \
-                            golang:1.21-alpine \
-                            sh -c 'apk add --no-cache git && cd /tmp && mkdir app && cd app && cp -r /dev/null . 2>/dev/null; true'
-                        """
-                        sh """
-                        docker run --rm \
-                            -v "${env.WORKSPACE}/api:/app" \
+                            -v "$WORKSPACE/api:/app" \
                             -w /app \
                             golang:1.21-alpine \
-                            sh -c 'go vet ./...'
-                        """
+                            sh -c "go vet ./..."
+                        '''
                     }
                 }
 
@@ -63,11 +62,13 @@ pipeline {
                     steps {
                         catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                             echo 'Checking for security vulnerabilities...'
-                            sh """
-                            docker run --rm --user root \
-                                ${REGISTRY}/${SOLVER_IMAGE}:${env.BUILD_NUMBER} \
-                                sh -c 'pip install --quiet pip-audit && pip-audit -r requirements.txt'
-                            """
+                            sh '''
+                            docker run --rm \
+                                -v "$WORKSPACE/hopfield:/app" \
+                                -w /app \
+                                python:3.11-slim \
+                                sh -c "pip install --quiet pip-audit && pip-audit -r requirements.txt"
+                            '''
                         }
                     }
                 }
@@ -80,27 +81,27 @@ pipeline {
                     steps {
                         script {
                             try {
-                                sh """
-                                docker run --name test-solver-${env.BUILD_NUMBER} \
-                                    --user root \
-                                    ${REGISTRY}/${SOLVER_IMAGE}:${env.BUILD_NUMBER} \
-                                    sh -c 'pip install --quiet pytest pytest-cov && python -m pytest tests/ -v \
+                                sh '''
+                                docker run --name test-solver-$BUILD_NUMBER \
+                                    -v "$WORKSPACE/hopfield:/app" \
+                                    -w /app \
+                                    python:3.11-slim \
+                                    sh -c "pip install --quiet -r requirements.txt pytest pytest-cov && python -m pytest tests/ -v \
                                         --junitxml=test-results-python.xml \
                                         --cov=src \
                                         --cov-report=xml:coverage-python.xml \
                                         --cov-report=term-missing \
-                                        --disable-warnings'
-                                """
+                                        --disable-warnings"
+                                '''
                             } finally {
-                                sh "docker cp test-solver-${env.BUILD_NUMBER}:/app/test-results-python.xml ${env.WORKSPACE}/test-results-python.xml || true"
-                                sh "docker cp test-solver-${env.BUILD_NUMBER}:/app/coverage-python.xml ${env.WORKSPACE}/coverage-python.xml || true"
                                 sh "docker rm test-solver-${env.BUILD_NUMBER} || true"
                             }
                         }
                     }
                     post {
                         always {
-                            junit allowEmptyResults: true, testResults: 'test-results-python.xml'
+                            junit allowEmptyResults: true, testResults: 'hopfield/test-results-python.xml'
+                            archiveArtifacts artifacts: 'hopfield/coverage-python.xml', allowEmptyArchive: true, fingerprint: true
                         }
                     }
                 }
@@ -109,15 +110,14 @@ pipeline {
                     steps {
                         script {
                             try {
-                                sh """
-                                docker run --name test-api-${env.BUILD_NUMBER} \
-                                    -v "${env.WORKSPACE}/api:/app" \
+                                sh '''
+                                docker run --name test-api-$BUILD_NUMBER \
+                                    -v "$WORKSPACE/api:/app" \
                                     -w /app \
                                     golang:1.21-alpine \
-                                    sh -c 'apk add --no-cache git gcc musl-dev && go test ./... -v -coverprofile=coverage-go.out 2>&1 | tee test-output-go.txt; go tool cover -func=coverage-go.out'
-                                """
+                                    sh -c "apk add --no-cache git gcc musl-dev && go test ./... -v -coverprofile=coverage-go.out 2>&1 | tee test-output-go.txt; go tool cover -func=coverage-go.out"
+                                '''
                             } finally {
-                                sh "docker cp test-api-${env.BUILD_NUMBER}:/app/coverage-go.out ${env.WORKSPACE}/coverage-go.out || true"
                                 sh "docker rm test-api-${env.BUILD_NUMBER} || true"
                             }
                         }
@@ -143,7 +143,7 @@ pipeline {
                             -Dsonar.sources=hopfield/src,api \
                             -Dsonar.tests=hopfield/tests \
                             -Dsonar.python.version=3.11 \
-                            -Dsonar.python.coverage.reportPaths=coverage-python.xml \
+                            -Dsonar.python.coverage.reportPaths=hopfield/coverage-python.xml \
                             -Dsonar.host.url=http://192.168.1.86:9000 \
                             -Dsonar.login="\$SONAR_USER" \
                             -Dsonar.password="\$SONAR_PASS" \
@@ -166,7 +166,6 @@ pipeline {
 
     post {
         always {
-            sh 'rm -f test-results-python.xml coverage-python.xml coverage-go.out || true'
             sh "docker rmi ${REGISTRY}/${SOLVER_IMAGE}:${env.BUILD_NUMBER} || true"
             sh "docker rmi ${REGISTRY}/${API_IMAGE}:${env.BUILD_NUMBER} || true"
             cleanWs()
