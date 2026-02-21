@@ -108,17 +108,19 @@ pipeline {
 
                 stage('Go Tests') {
                     steps {
-                        script {
-                            try {
-                                sh '''
-                                docker run --name test-api-$BUILD_NUMBER \
-                                    -v "$WORKSPACE/api:/app" \
-                                    -w /app \
-                                    golang:1.21-alpine \
-                                    sh -c "apk add --no-cache git gcc musl-dev && go test ./... -v -coverprofile=coverage-go.out 2>&1 | tee test-output-go.txt; go tool cover -func=coverage-go.out"
-                                '''
-                            } finally {
-                                sh "docker rm test-api-${env.BUILD_NUMBER} || true"
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                            script {
+                                try {
+                                    sh '''
+                                    docker run --name test-api-$BUILD_NUMBER \
+                                        -v "$WORKSPACE/api:/app" \
+                                        -w /app \
+                                        golang:1.21-alpine \
+                                        sh -c "apk add --no-cache git gcc musl-dev && go test ./... -v -coverprofile=coverage-go.out 2>&1 | tee test-output-go.txt; go tool cover -func=coverage-go.out"
+                                    '''
+                                } finally {
+                                    sh "docker rm test-api-${env.BUILD_NUMBER} || true"
+                                }
                             }
                         }
                     }
