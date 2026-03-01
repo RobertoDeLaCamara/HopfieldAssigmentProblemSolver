@@ -52,7 +52,7 @@ pipeline {
                         docker run --rm \
                             -v "$WORKSPACE/api:/app" \
                             -w /app \
-                            golang:1.21-alpine \
+                            golang:1.24-alpine \
                             sh -c "go vet ./..."
                         '''
                     }
@@ -115,7 +115,7 @@ pipeline {
                                     docker run --name test-api-$BUILD_NUMBER \
                                         -v "$WORKSPACE/api:/app" \
                                         -w /app \
-                                        golang:1.21-alpine \
+                                        golang:1.24-alpine \
                                         sh -c "apk add --no-cache git gcc musl-dev && go test ./... -v -coverprofile=coverage-go.out 2>&1 | tee test-output-go.txt; go tool cover -func=coverage-go.out"
                                     '''
                                 } finally {
