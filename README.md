@@ -32,7 +32,7 @@ A high-performance API service for solving assignment problems using Hopfield ne
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/RobertoDeLaCamara/HopfieldAssigmentProblemSolver.git
    cd HopfieldAssigmentProblemSolver
    ```
 
