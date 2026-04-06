@@ -266,4 +266,4 @@ The service generates structured logs in JSON format that include:
 - Client IP
 - User-Agent
 
-Logs are available in Docker containers and can be collected by monitoring systems like ELK Stack, Prometheus, etc.
+Logs are available in Docker containers and can be collected by monitoring systems like ELK Stack, Metrics Service, etc.

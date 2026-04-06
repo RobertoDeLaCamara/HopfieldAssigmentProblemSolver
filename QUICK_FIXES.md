@@ -94,7 +94,7 @@ These are immediate improvements that take minimal time but provide significant 
     - JSON structured logging
     - Log performance metrics
 
-14. **Add Prometheus metrics**
+14. **Add Metrics Service metrics**
     - Request rate, latency, errors
     - Algorithm metrics (iterations, convergence)
     - Service health metrics

@@ -107,7 +107,7 @@ I've implemented several "quick wins" that significantly improve the repository:
 ### 4. **No Monitoring** (Operational Risk 🟡)
 - Basic logging only
 - No metrics, no alerting
-- Recommendation: Add Prometheus + Grafana
+- Recommendation: Add Metrics Service + Dashboard Service
 
 ### 5. **No Database** (Scalability Limit 🟡)
 - No persistence
@@ -172,7 +172,7 @@ go test ./...  # Verify everything still works
 ### Next Week (< 16 hours)
 - ⬜ Implement API key authentication
 - ⬜ Add structured logging with request IDs
-- ⬜ Add Prometheus metrics endpoints
+- ⬜ Add Metrics Service metrics endpoints
 - ⬜ Create OpenAPI specification
 
 ### This Month (< 1 week)

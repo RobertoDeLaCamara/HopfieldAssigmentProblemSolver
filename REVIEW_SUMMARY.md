@@ -140,7 +140,7 @@
    - Usage tracking
 
 5. ✅ **Add comprehensive monitoring**
-   - Prometheus metrics
+   - Metrics Service metrics
    - Structured logging
    - Health check improvements
 

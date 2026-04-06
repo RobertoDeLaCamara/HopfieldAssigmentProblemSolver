@@ -100,7 +100,7 @@ Current logging is minimal and lacks structured monitoring.
 - Implement request ID tracking across services
 - Add performance metrics (request duration, algorithm iterations, convergence rate)
 - Implement structured logging (JSON format) for better log aggregation
-- Add Prometheus metrics endpoints
+- Add Metrics Service metrics endpoints
 - Implement distributed tracing (OpenTelemetry)
 - Add alerts for service health issues
 
@@ -506,12 +506,12 @@ repos:
 **Effort:** Medium
 
 **Recommended Actions:**
-- Add Prometheus metrics:
+- Add Metrics Service metrics:
   - Request rate, latency, error rate
   - Algorithm convergence metrics
   - Matrix size distribution
   - Cache hit/miss rates
-- Implement Grafana dashboards
+- Implement Dashboard Service dashboards
 - Add custom business metrics
 - Track API usage patterns
 

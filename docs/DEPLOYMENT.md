@@ -197,8 +197,8 @@ volumes:
 
 ### 4. Monitoring and Alerts
 
-- Configure Prometheus for metrics
-- Configure Grafana for visualization
+- Configure Metrics Service for metrics
+- Configure Dashboard Service for visualization
 - Configure alerts for service failures
 - Implement centralized logging (ELK Stack)
 

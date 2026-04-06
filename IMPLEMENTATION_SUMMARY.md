@@ -270,7 +270,7 @@
 - ✅ Request ID tracking
 - ✅ Metrics collection
 - ✅ Performance tracking
-- ⬜ Prometheus/Grafana (not implemented - can be added)
+- ⬜ Metrics Service/Dashboard Service (not implemented - can be added)
 - ⬜ Alerting (not implemented - can be added)
 
 ### Performance: C → B+
