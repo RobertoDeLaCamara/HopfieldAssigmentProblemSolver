@@ -114,31 +114,19 @@ class HopfieldAssignmentSolver:
         for it in range(self.max_iterations):
             iterations = it + 1
 
-            # Compute equations of motion
-            du = np.zeros((n, n))
+            # Equations of motion, vectorized via NumPy broadcasting.
+            # Mathematically equivalent to the previous double-for; ~20-100x faster
+            # for n>=20 because it avoids Python interpreter overhead.
+            row_sums = np.sum(v, axis=1)        # shape (n,)
+            col_sums = np.sum(v, axis=0)        # shape (n,)
+            total_sum = np.sum(v)               # scalar
 
-            # Sum of activations in each row (minus self)
-            row_sums = np.sum(v, axis=1)
-            # Sum of activations in each col (minus self)
-            col_sums = np.sum(v, axis=0)
-            # Total sum of activations
-            total_sum = np.sum(v)
-
-            for x in range(n):
-                for i in range(n):
-                    # Constraint 1: One 1 per row
-                    term1 = -self.A * (row_sums[x] - 1)
-
-                    # Constraint 2: One 1 per column
-                    term2 = -self.B * (col_sums[i] - 1)
-
-                    # Constraint 3: Total n units active
-                    term3 = -self.C * (total_sum - n)
-
-                    # Data term: Minimize cost
-                    term4 = -self.D * norm_matrix[x, i]
-
-                    du[x, i] = term1 + term2 + term3 + term4
+            du = (
+                -self.A * (row_sums[:, None] - 1)   # row constraint  -> (n,1) broadcast
+                - self.B * (col_sums[None, :] - 1)  # col constraint  -> (1,n) broadcast
+                - self.C * (total_sum - n)          # global constraint (scalar)
+                - self.D * norm_matrix              # data term (n,n)
+            )
 
             # Update internal state
             u += du * dt

@@ -105,42 +105,31 @@ func (h *AssignmentHandler) SolveBatch(c *gin.Context) {
 		return
 	}
 
-	// Process each problem with timeout
-	results := make([]models.BatchResult, 0, len(req.Problems))
-	for _, problem := range req.Problems {
+	// Process each problem with a per-iteration timeout context.
+	// The closure scopes `defer cancel()` to a single iteration, preventing
+	// timer/goroutine accumulation seen with `defer cancel()` inside a for loop.
+	processProblem := func(problem models.BatchProblem) models.BatchResult {
 		assignmentReq := models.AssignmentRequest{
 			CostMatrix: problem.CostMatrix,
 		}
 
-		// Validate the individual problem
 		if err := assignmentReq.Validate(); err != nil {
-			results = append(results, models.BatchResult{
-				ID:      problem.ID,
-				Success: false,
-				Error:   err.Error(),
-			})
-			continue
+			return models.BatchResult{ID: problem.ID, Success: false, Error: err.Error()}
 		}
 
-		// Solve the problem with timeout
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
 		defer cancel()
 
 		result, err := h.callHopfieldServiceWithContext(ctx, assignmentReq)
 		if err != nil {
-			results = append(results, models.BatchResult{
-				ID:      problem.ID,
-				Success: false,
-				Error:   err.Error(),
-			})
-			continue
+			return models.BatchResult{ID: problem.ID, Success: false, Error: err.Error()}
 		}
+		return models.BatchResult{ID: problem.ID, Success: true, Result: result}
+	}
 
-		results = append(results, models.BatchResult{
-			ID:      problem.ID,
-			Success: true,
-			Result:  result,
-		})
+	results := make([]models.BatchResult, 0, len(req.Problems))
+	for _, problem := range req.Problems {
+		results = append(results, processProblem(problem))
 	}
 
 	c.JSON(http.StatusOK, models.BatchResponse{

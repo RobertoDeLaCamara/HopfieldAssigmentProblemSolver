@@ -25,6 +25,13 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
+	// Fail closed: in release mode, refuse to start without API_KEY configured.
+	// Previously the auth middleware silently disabled itself with a warn log,
+	// leaving production deployments wide open if the env var was missing.
+	if gin.Mode() == gin.ReleaseMode && os.Getenv("API_KEY") == "" {
+		logger.Fatal("API_KEY must be set when GIN_MODE=release; refusing to start in open mode")
+	}
+
 	// Setup routes
 	router := gin.Default()
 	
@@ -41,10 +48,11 @@ func main() {
 	router.GET("/health/live", healthHandler.LivenessCheck)
 	router.GET("/time", healthHandler.CurrentTime)
 
-	// Assignment endpoints
+	// Assignment endpoints — protected by API key authentication.
 	assignmentHandler := handlers.NewAssignmentHandler(logger)
-	router.POST("/solve", assignmentHandler.SolveAssignment)
-	router.POST("/solve/batch", assignmentHandler.SolveBatch)
+	authed := router.Group("", middleware.APIKeyAuth(logger))
+	authed.POST("/solve", assignmentHandler.SolveAssignment)
+	authed.POST("/solve/batch", assignmentHandler.SolveBatch)
 
 	// Start server
 	port := os.Getenv("PORT")
