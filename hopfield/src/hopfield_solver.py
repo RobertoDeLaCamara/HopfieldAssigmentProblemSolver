@@ -13,6 +13,18 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+def sort_missing_assignments(
+    assigned_rows: set, assigned_cols: set, n: int
+) -> List[Tuple[int, int]]:
+    # Set difference is order-undefined; sort both sides so the fallback
+    # produces deterministic (row, col) pairs across runs.
+    if n <= 0:
+        return []
+    missing_rows = sorted(set(range(n)) - assigned_rows)
+    missing_cols = sorted(set(range(n)) - assigned_cols)
+    return list(zip(missing_rows, missing_cols))
+
+
 class HopfieldAssignmentSolver:
     def __init__(self, max_iterations: int = 1000, threshold: float = 0.001):
         """
@@ -181,10 +193,7 @@ class HopfieldAssignmentSolver:
         if len(assigned_rows) < n:
             # Fallback for failed convergence
             logger.warning("Hopfield network did not converge to a valid permutation.")
-            # Fill missing
-            missing_rows = list(set(range(n)) - assigned_rows)
-            missing_cols = list(set(range(n)) - assigned_cols)
-            for r, c in zip(missing_rows, missing_cols):
+            for r, c in sort_missing_assignments(assigned_rows, assigned_cols, n):
                 final_assignments[r] = int(c)
 
         total_cost = self._calculate_total_cost(final_assignments, matrix)
