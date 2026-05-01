@@ -37,7 +37,7 @@ func (h *HealthHandler) ReadinessCheck(c *gin.Context) {
 
 	response := models.HealthResponse{
 		Status:  "ready",
-		Service: "assignment-api",
+		Service: "hopfield-assignment-api",
 		Version: "1.0.0",
 	}
 
@@ -48,7 +48,7 @@ func (h *HealthHandler) LivenessCheck(c *gin.Context) {
 	// Basic verification that the service is running
 	response := models.HealthResponse{
 		Status:  "alive",
-		Service: "assignment-api",
+		Service: "hopfield-assignment-api",
 		Version: "1.0.0",
 	}
 

@@ -101,7 +101,11 @@ func (r *AssignmentRequest) ToJSON() ([]byte, error) {
 	return json.Marshal(r)
 }
 
-// FromJSON creates an AssignmentRequest from JSON
+// FromJSON creates an AssignmentRequest from JSON and validates it.
+// Returns an error if the JSON is malformed or the resulting request fails validation.
 func (r *AssignmentRequest) FromJSON(data []byte) error {
-	return json.Unmarshal(data, r)
+	if err := json.Unmarshal(data, r); err != nil {
+		return err
+	}
+	return r.Validate()
 }

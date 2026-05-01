@@ -39,7 +39,7 @@ func TestHealthHandler_HealthCheck(t *testing.T) {
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
 	assert.Equal(t, "healthy", response.Status)
-	assert.Equal(t, "assignment-api", response.Service)
+	assert.Equal(t, "hopfield-assignment-api", response.Service)
 	assert.Equal(t, "1.0.0", response.Version)
 }
 
@@ -70,7 +70,7 @@ func TestHealthHandler_ReadinessCheck(t *testing.T) {
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
 	assert.Equal(t, "ready", response.Status)
-	assert.Equal(t, "assignment-api", response.Service)
+	assert.Equal(t, "hopfield-assignment-api", response.Service)
 	assert.Equal(t, "1.0.0", response.Version)
 }
 
@@ -101,7 +101,7 @@ func TestHealthHandler_LivenessCheck(t *testing.T) {
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
 	assert.Equal(t, "alive", response.Status)
-	assert.Equal(t, "assignment-api", response.Service)
+	assert.Equal(t, "hopfield-assignment-api", response.Service)
 	assert.Equal(t, "1.0.0", response.Version)
 }
 

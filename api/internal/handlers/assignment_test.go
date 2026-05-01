@@ -138,10 +138,11 @@ func TestAssignmentHandler_SolveAssignment(t *testing.T) {
 
 func TestAssignmentHandler_SolveBatch(t *testing.T) {
 	tests := []struct {
-		name           string
-		requestBody    interface{}
-		expectedStatus int
-		expectError    bool
+		name            string
+		requestBody     interface{}
+		expectedStatus  int
+		expectError     bool
+		expectMockCall  bool
 	}{
 		{
 			name: "valid batch request",
@@ -159,6 +160,7 @@ func TestAssignmentHandler_SolveBatch(t *testing.T) {
 			},
 			expectedStatus: http.StatusOK,
 			expectError:    false,
+			expectMockCall: true,
 		},
 		{
 			name: "empty problems list",
@@ -188,6 +190,7 @@ func TestAssignmentHandler_SolveBatch(t *testing.T) {
 			},
 			expectedStatus: http.StatusOK, // Batch should still return success with error in result
 			expectError:    false,
+			expectMockCall: false, // Validation short-circuits before HTTP call
 		},
 	}
 
@@ -202,8 +205,8 @@ func TestAssignmentHandler_SolveBatch(t *testing.T) {
 			mockClient := &MockHTTPClient{}
 			handler.httpClient = mockClient
 
-			// Setup mock response for valid requests
-			if !tt.expectError {
+			// Setup mock response only when handler will actually call the solver
+			if tt.expectMockCall {
 				mockResponse := &http.Response{
 					StatusCode: http.StatusOK,
 					Body:       createMockResponseBody(t, true, createMockAssignmentResponse()),
@@ -248,8 +251,8 @@ func TestAssignmentHandler_SolveBatch(t *testing.T) {
 				}
 			}
 
-			// Verify mock expectations
-			if !tt.expectError {
+			// Verify mock expectations only when a call was expected
+			if tt.expectMockCall {
 				mockClient.AssertExpectations(t)
 			}
 		})
