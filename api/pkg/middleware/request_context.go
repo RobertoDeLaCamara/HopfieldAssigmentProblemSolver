@@ -43,15 +43,15 @@ func StructuredLogging(logger *logrus.Logger) gin.HandlerFunc {
 
 		// Log with structured fields
 		fields := logrus.Fields{
-			"request_id":  requestID,
-			"method":      c.Request.Method,
-			"path":        path,
-			"query":       raw,
-			"status":      c.Writer.Status(),
-			"latency_ms":  latency.Milliseconds(),
-			"client_ip":   c.ClientIP(),
-			"user_agent":  c.Request.UserAgent(),
-			"error":       c.Errors.String(),
+			"request_id": requestID,
+			"method":     c.Request.Method,
+			"path":       path,
+			"query":      raw,
+			"status":     c.Writer.Status(),
+			"latency_ms": latency.Milliseconds(),
+			"client_ip":  c.ClientIP(),
+			"user_agent": c.Request.UserAgent(),
+			"error":      c.Errors.String(),
 		}
 
 		// Add authentication info if available
@@ -73,10 +73,10 @@ func StructuredLogging(logger *logrus.Logger) gin.HandlerFunc {
 
 // RequestMetrics middleware tracks request metrics
 type RequestMetrics struct {
-	TotalRequests   int64
-	ErrorCount      int64
-	AvgLatency      time.Duration
-	MaxLatency      time.Duration
+	TotalRequests int64
+	ErrorCount    int64
+	AvgLatency    time.Duration
+	MaxLatency    time.Duration
 }
 
 var metrics = &RequestMetrics{}

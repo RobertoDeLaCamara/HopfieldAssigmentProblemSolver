@@ -58,10 +58,10 @@ func (h *HealthHandler) LivenessCheck(c *gin.Context) {
 func (h *HealthHandler) CurrentTime(c *gin.Context) {
 	// Return current time in ISO 8601 format
 	currentTime := time.Now().Format(time.RFC3339)
-	
+
 	response := map[string]interface{}{
 		"time": currentTime,
 	}
-	
+
 	c.JSON(http.StatusOK, response)
 }

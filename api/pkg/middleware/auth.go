@@ -15,7 +15,7 @@ func APIKeyAuth(logger *logrus.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get API key from environment or use default for development
 		expectedAPIKey := os.Getenv("API_KEY")
-		
+
 		// If no API key is configured, skip authentication (development mode)
 		if expectedAPIKey == "" {
 			logger.Warn("API_KEY not configured - authentication disabled (development mode)")
@@ -38,7 +38,7 @@ func APIKeyAuth(logger *logrus.Logger) gin.HandlerFunc {
 				"ip":   c.ClientIP(),
 				"path": c.Request.URL.Path,
 			}).Warn("Request without API key")
-			
+
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"success": false,
 				"error":   "API key required. Provide X-API-Key header or Authorization: Bearer <token>",
@@ -53,7 +53,7 @@ func APIKeyAuth(logger *logrus.Logger) gin.HandlerFunc {
 				"ip":   c.ClientIP(),
 				"path": c.Request.URL.Path,
 			}).Warn("Invalid API key")
-			
+
 			c.JSON(http.StatusForbidden, gin.H{
 				"success": false,
 				"error":   "Invalid API key",
