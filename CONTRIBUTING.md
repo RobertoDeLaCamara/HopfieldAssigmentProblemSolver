@@ -124,7 +124,7 @@ HopfieldAssigmentProblemSolver/
 
 ### 1. Choose an Issue
 
-- Check the [Issues](https://github.com/your-repo/issues) page
+- Check the [Issues](https://github.com/RobertoDeLaCamara/HopfieldAssigmentProblemSolver/issues) page
 - Look for issues labeled `good first issue` or `help wanted`
 - Comment on the issue to indicate you're working on it
 
@@ -167,7 +167,7 @@ make test-api
 ### Test Coverage
 
 The project maintains comprehensive test coverage with:
-- **29 unit tests** for individual components and algorithms
+- **74 Python unit tests** (`hopfield/tests/`) + **23 Go unit tests** (`api/`) for individual components and algorithms
 - **13 integration tests** for end-to-end functionality
 - **100% test pass rate** across all test suites
 
@@ -222,9 +222,6 @@ def test_solve_simple_problem():
     assert len(assignments) == 2
     assert cost >= 0
     assert iterations > 0
-```
-    assert 'assignments' in result
-    assert 'total_cost' in result
 ```
 
 #### Go Tests (API Gateway)
