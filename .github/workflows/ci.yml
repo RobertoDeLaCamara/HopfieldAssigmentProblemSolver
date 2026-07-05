@@ -85,8 +85,9 @@ jobs:
     
     - name: Install Python linters
       run: |
-        pip install flake8 black isort mypy
-    
+        cd hopfield
+        pip install -r requirements-dev.txt
+
     - name: Lint Python code
       run: |
         cd hopfield

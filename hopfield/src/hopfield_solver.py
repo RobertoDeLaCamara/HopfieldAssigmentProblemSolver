@@ -129,15 +129,15 @@ class HopfieldAssignmentSolver:
             # Equations of motion, vectorized via NumPy broadcasting.
             # Mathematically equivalent to the previous double-for; ~20-100x faster
             # for n>=20 because it avoids Python interpreter overhead.
-            row_sums = np.sum(v, axis=1)        # shape (n,)
-            col_sums = np.sum(v, axis=0)        # shape (n,)
-            total_sum = np.sum(v)               # scalar
+            row_sums = np.sum(v, axis=1)  # shape (n,)
+            col_sums = np.sum(v, axis=0)  # shape (n,)
+            total_sum = np.sum(v)  # scalar
 
             du = (
-                -self.A * (row_sums[:, None] - 1)   # row constraint  -> (n,1) broadcast
+                -self.A * (row_sums[:, None] - 1)  # row constraint  -> (n,1) broadcast
                 - self.B * (col_sums[None, :] - 1)  # col constraint  -> (1,n) broadcast
-                - self.C * (total_sum - n)          # global constraint (scalar)
-                - self.D * norm_matrix              # data term (n,n)
+                - self.C * (total_sum - n)  # global constraint (scalar)
+                - self.D * norm_matrix  # data term (n,n)
             )
 
             # Update internal state
