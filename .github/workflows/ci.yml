@@ -50,7 +50,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.21'
+        go-version-file: api/go.mod
         cache-dependency-path: api/go.sum
     
     - name: Download dependencies
@@ -98,8 +98,8 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.21'
-    
+        go-version-file: api/go.mod
+
     - name: Lint Go code
       uses: golangci/golangci-lint-action@v4
       with:

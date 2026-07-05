@@ -138,11 +138,11 @@ func TestAssignmentHandler_SolveAssignment(t *testing.T) {
 
 func TestAssignmentHandler_SolveBatch(t *testing.T) {
 	tests := []struct {
-		name            string
-		requestBody     interface{}
-		expectedStatus  int
-		expectError     bool
-		expectMockCall  bool
+		name           string
+		requestBody    interface{}
+		expectedStatus int
+		expectError    bool
+		expectMockCall bool
 	}{
 		{
 			name: "valid batch request",
@@ -243,7 +243,7 @@ func TestAssignmentHandler_SolveBatch(t *testing.T) {
 				assert.NoError(t, err)
 				assert.True(t, response.Success)
 				assert.NotEmpty(t, response.Results)
-				
+
 				// Check that we have the expected number of results
 				if tt.name == "batch with invalid problem" {
 					assert.Len(t, response.Results, 1)
@@ -386,9 +386,9 @@ func TestAssignmentHandler_ValidateMatrix(t *testing.T) {
 			req := models.AssignmentRequest{
 				CostMatrix: tt.costMatrix,
 			}
-			
+
 			err := req.Validate()
-			
+
 			if tt.expectError {
 				assert.Error(t, err)
 			} else {

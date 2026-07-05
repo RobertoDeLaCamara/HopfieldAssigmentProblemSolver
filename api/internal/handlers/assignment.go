@@ -35,8 +35,8 @@ func NewAssignmentHandler(logger *logrus.Logger) *AssignmentHandler {
 	}
 
 	return &AssignmentHandler{
-		logger:       logger,
-		hopfieldURL:  hopfieldURL,
+		logger:      logger,
+		hopfieldURL: hopfieldURL,
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},

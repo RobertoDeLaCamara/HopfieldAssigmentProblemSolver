@@ -34,7 +34,7 @@ func main() {
 
 	// Setup routes
 	router := gin.Default()
-	
+
 	// Add logging middleware
 	router.Use(middleware.LoggingMiddleware(logger))
 
@@ -59,9 +59,9 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
-	
+
 	logger.Infof("Starting server on port %s", port)
-	
+
 	// Create server with timeout
 	server := &http.Server{
 		Addr:    ":" + port,
@@ -79,15 +79,15 @@ func main() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-	
+
 	logger.Info("Shutting down server...")
-	
+
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	
+
 	if err := server.Shutdown(ctx); err != nil {
 		logger.WithError(err).Fatal("Server forced to shutdown")
 	}
-	
+
 	logger.Info("Server exited properly")
 }
