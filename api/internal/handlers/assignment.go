@@ -159,7 +159,7 @@ func (h *AssignmentHandler) callHopfieldServiceWithContext(ctx context.Context, 
 	if err != nil {
 		return nil, fmt.Errorf("error making request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// Read the response
 	respBody, err := io.ReadAll(resp.Body)
