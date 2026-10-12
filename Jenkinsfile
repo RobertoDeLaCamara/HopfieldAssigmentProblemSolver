@@ -158,10 +158,10 @@ pipeline {
         stage('Push to Registry') {
             steps {
                 echo "Pushing images to ${REGISTRY}..."
-                sh "docker push ${REGISTRY}/${SOLVER_IMAGE}:${env.BUILD_NUMBER}"
-                sh "docker push ${REGISTRY}/${SOLVER_IMAGE}:latest"
-                sh "docker push ${REGISTRY}/${API_IMAGE}:${env.BUILD_NUMBER}"
-                sh "docker push ${REGISTRY}/${API_IMAGE}:latest"
+                retry(3) { sh "docker push ${REGISTRY}/${SOLVER_IMAGE}:${env.BUILD_NUMBER}" }
+                retry(3) { sh "docker push ${REGISTRY}/${SOLVER_IMAGE}:latest" }
+                retry(3) { sh "docker push ${REGISTRY}/${API_IMAGE}:${env.BUILD_NUMBER}" }
+                retry(3) { sh "docker push ${REGISTRY}/${API_IMAGE}:latest" }
             }
         }
     }
