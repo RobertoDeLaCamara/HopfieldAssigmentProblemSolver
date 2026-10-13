@@ -11,7 +11,7 @@ The repository has been significantly enhanced with production-ready features. S
 - **Security Scanning** - Automated with Trivy in CI/CD pipeline
 
 ### 🔧 DevOps & CI/CD
-- **GitHub Actions Pipeline** - Automated testing, linting, and building
+- **CI Pipeline** - Automated testing, linting, and building (now runs on Jenkins; the GitHub Actions workflow is disabled)
 - **Dependabot** - Automated weekly dependency updates
 - **Pre-commit Hooks** - Code quality checks before commit
 - **Docker Optimization** - Multi-stage builds, ~30% smaller images
@@ -128,7 +128,9 @@ curl -H "Authorization: Bearer your-api-key" http://localhost:8080/solve
 
 ## 🧪 CI/CD Pipeline
 
-The new GitHub Actions pipeline automatically:
+> **Note:** CI now runs on a self-hosted Jenkins pipeline (`Jenkinsfile`). The GitHub Actions workflow described below is disabled and kept for reference.
+
+The GitHub Actions pipeline automatically:
 - ✅ Runs Python tests with coverage
 - ✅ Runs Go tests with coverage
 - ✅ Lints Python code (flake8, black, isort)

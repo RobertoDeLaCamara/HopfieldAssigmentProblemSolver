@@ -1,7 +1,7 @@
 # Hopfield Assignment Problem Solver
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Go Version](https://img.shields.io/badge/go-1.21+-blue.svg)](https://golang.org/)
+[![Go Version](https://img.shields.io/badge/go-1.25+-blue.svg)](https://golang.org/)
 [![Python Version](https://img.shields.io/badge/python-3.11+-blue.svg)](https://python.org/)
 
 A high-performance API service for solving assignment problems using Hopfield neural networks. The system consists of a Go-based API gateway that interfaces with a Python-based Hopfield solver service, all containerized with Docker for easy deployment.
@@ -313,4 +313,5 @@ See [CHANGELOG.md](CHANGELOG.md) for a complete list of changes and version hist
 **Happy optimizing! 🎯**
 
 ## CI/CD Status
-Verified on 2026-02-13: Pipeline enabled.
+CI runs on a self-hosted Jenkins pipeline (`Jenkinsfile`): lint, security checks, Python and Go tests, SonarQube analysis and image push.
+The GitHub Actions workflow (`.github/workflows/ci.yml`) is kept for reference but disabled.

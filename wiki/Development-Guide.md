@@ -146,7 +146,7 @@ hopfield/
 
 nginx/
 ├── nginx.conf                     Rate limiting, proxy, security headers
-└── ssl/                           cert.pem + key.pem (dev certs)
+└── ssl/                           dev certs, not in git — run `make ssl-generate`
 
 tests/
 └── integration_test.py            Full stack tests

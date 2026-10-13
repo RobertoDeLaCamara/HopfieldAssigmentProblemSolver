@@ -83,12 +83,11 @@ docker-compose down
 
 ### CI/CD
 
-Tests are automatically run on:
-- Every push to any branch
-- Every pull request
-- GitHub Actions workflow: `.github/workflows/ci.yml`
+Tests run automatically on every push via the self-hosted Jenkins pipeline
+(`Jenkinsfile`: lint, security checks, Python and Go tests, SonarQube).
 
-See test results in the Actions tab of the GitHub repository.
+The GitHub Actions workflow (`.github/workflows/ci.yml`) is disabled and kept
+for reference only.
 
 ## Test Coverage
 
