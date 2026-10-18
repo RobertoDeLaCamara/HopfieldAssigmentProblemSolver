@@ -10,6 +10,8 @@ import (
 	"math"
 	"strconv"
 	"strings"
+
+	"hopfield-assignment-api/pkg/i18n"
 )
 
 // maxCSVRows bounds the work done on an upload before Validate() applies the size limits.
@@ -41,38 +43,38 @@ func ParseCSVMatrix(r io.Reader) ([][]float64, error) {
 			break
 		}
 		if err != nil {
-			return nil, fmt.Errorf("malformed CSV: %w", err)
+			return nil, newValidationError("file", i18n.CSVMalformed, err.Error())
 		}
 		if len(record) == 1 && strings.TrimSpace(record[0]) == "" {
 			continue // a line with only spaces is blank, like an empty line
 		}
 		if len(matrix) >= maxCSVRows {
-			return nil, fmt.Errorf("the CSV has more than %d rows", maxCSVRows)
+			return nil, newValidationError("file", i18n.CSVTooManyRows, maxCSVRows)
 		}
 
 		row := make([]float64, len(record))
 		for j, cell := range record {
 			cell = strings.TrimSpace(cell)
 			if cell == "" {
-				return nil, fmt.Errorf("row %d, column %d is empty", len(matrix)+1, j+1)
+				return nil, newValidationError("file", i18n.CSVEmptyCell, len(matrix)+1, j+1)
 			}
 			v, err := strconv.ParseFloat(cell, 64)
 			if err != nil {
-				return nil, fmt.Errorf("row %d, column %d is not a number: %q", len(matrix)+1, j+1, cell)
+				return nil, newValidationError("file", i18n.CSVNotNumber, len(matrix)+1, j+1, cell)
 			}
 			if math.IsNaN(v) || math.IsInf(v, 0) {
-				return nil, fmt.Errorf("row %d, column %d is not a finite number: %q", len(matrix)+1, j+1, cell)
+				return nil, newValidationError("file", i18n.CSVNotFinite, len(matrix)+1, j+1, cell)
 			}
 			row[j] = v
 		}
 		if len(matrix) > 0 && len(row) != len(matrix[0]) {
-			return nil, fmt.Errorf("row %d has %d values but row 1 has %d", len(matrix)+1, len(row), len(matrix[0]))
+			return nil, newValidationError("file", i18n.CSVRagged, len(matrix)+1, len(row), len(matrix[0]))
 		}
 		matrix = append(matrix, row)
 	}
 
 	if len(matrix) == 0 {
-		return nil, errors.New("the CSV has no data")
+		return nil, newValidationError("file", i18n.CSVNoData)
 	}
 	return matrix, nil
 }

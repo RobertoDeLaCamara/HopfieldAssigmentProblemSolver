@@ -7,6 +7,9 @@ import (
 	"errors"
 	"fmt"
 	"hopfield-assignment-api/internal/models"
+	"hopfield-assignment-api/pkg/i18n"
+	"hopfield-assignment-api/pkg/metrics"
+	"hopfield-assignment-api/pkg/middleware"
 	"io"
 	"net/http"
 	"os"
@@ -15,6 +18,16 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
+
+// localize renders an error for the client in the request's language. Only validation errors have
+// translations; anything else (solver or network errors) is returned as is.
+func localize(c *gin.Context, err error) string {
+	var ve *models.ValidationError
+	if errors.As(err, &ve) {
+		return ve.Localized(middleware.LanguageFrom(c))
+	}
+	return err.Error()
+}
 
 // HTTPDoer is an interface for making HTTP requests (allows mocking in tests)
 type HTTPDoer interface {
@@ -51,7 +64,7 @@ func (h *AssignmentHandler) SolveAssignment(c *gin.Context) {
 		h.logger.WithError(err).Warn("Invalid request format")
 		c.JSON(http.StatusBadRequest, models.APIResponse{
 			Success: false,
-			Error:   "Invalid request format: " + err.Error(),
+			Error:   i18n.T(middleware.LanguageFrom(c), i18n.InvalidRequestFormat, err.Error()),
 		})
 		return
 	}
@@ -73,14 +86,14 @@ func (h *AssignmentHandler) SolveCSV(c *gin.Context) {
 		if errors.As(err, &tooLarge) {
 			c.JSON(http.StatusRequestEntityTooLarge, models.APIResponse{
 				Success: false,
-				Error:   fmt.Sprintf("The CSV is larger than %d bytes", maxCSVUploadBytes),
+				Error:   i18n.T(middleware.LanguageFrom(c), i18n.CSVTooLarge, maxCSVUploadBytes),
 			})
 			return
 		}
 		h.logger.WithError(err).Warn("Missing CSV file")
 		c.JSON(http.StatusBadRequest, models.APIResponse{
 			Success: false,
-			Error:   `Send the CSV as multipart/form-data in a field named "file"`,
+			Error:   i18n.T(middleware.LanguageFrom(c), i18n.CSVMissingFile),
 		})
 		return
 	}
@@ -88,7 +101,7 @@ func (h *AssignmentHandler) SolveCSV(c *gin.Context) {
 	file, err := fileHeader.Open()
 	if err != nil {
 		h.logger.WithError(err).Warn("Could not open the uploaded CSV")
-		c.JSON(http.StatusBadRequest, models.APIResponse{Success: false, Error: "Could not read the uploaded file"})
+		c.JSON(http.StatusBadRequest, models.APIResponse{Success: false, Error: i18n.T(middleware.LanguageFrom(c), i18n.CSVUnreadable)})
 		return
 	}
 	defer func() { _ = file.Close() }()
@@ -96,7 +109,10 @@ func (h *AssignmentHandler) SolveCSV(c *gin.Context) {
 	matrix, err := models.ParseCSVMatrix(file)
 	if err != nil {
 		h.logger.WithError(err).Warn("Invalid CSV")
-		c.JSON(http.StatusBadRequest, models.APIResponse{Success: false, Error: "Invalid CSV: " + err.Error()})
+		c.JSON(http.StatusBadRequest, models.APIResponse{
+			Success: false,
+			Error:   i18n.T(middleware.LanguageFrom(c), i18n.CSVInvalid, localize(c, err)),
+		})
 		return
 	}
 
@@ -110,7 +126,7 @@ func (h *AssignmentHandler) validateAndSolve(c *gin.Context, req models.Assignme
 		h.logger.WithError(err).Warn("Validation error")
 		c.JSON(http.StatusBadRequest, models.APIResponse{
 			Success: false,
-			Error:   err.Error(),
+			Error:   localize(c, err),
 		})
 		return
 	}
@@ -142,7 +158,7 @@ func (h *AssignmentHandler) SolveBatch(c *gin.Context) {
 		h.logger.WithError(err).Warn("Error parsing batch request")
 		c.JSON(http.StatusBadRequest, models.APIResponse{
 			Success: false,
-			Error:   "Invalid request format: " + err.Error(),
+			Error:   i18n.T(middleware.LanguageFrom(c), i18n.InvalidRequestFormat, err.Error()),
 		})
 		return
 	}
@@ -150,13 +166,13 @@ func (h *AssignmentHandler) SolveBatch(c *gin.Context) {
 	if len(req.Problems) == 0 {
 		c.JSON(http.StatusBadRequest, models.APIResponse{
 			Success: false,
-			Error:   "At least one problem is required in the batch",
+			Error:   i18n.T(middleware.LanguageFrom(c), i18n.BatchEmpty),
 		})
 		return
 	}
 
 	if err := models.ValidateBatchSize(len(req.Problems)); err != nil {
-		c.JSON(http.StatusBadRequest, models.APIResponse{Success: false, Error: err.Error()})
+		c.JSON(http.StatusBadRequest, models.APIResponse{Success: false, Error: localize(c, err)})
 		return
 	}
 
@@ -169,7 +185,7 @@ func (h *AssignmentHandler) SolveBatch(c *gin.Context) {
 		}
 
 		if err := assignmentReq.Validate(); err != nil {
-			return models.BatchResult{ID: problem.ID, Success: false, Error: err.Error()}
+			return models.BatchResult{ID: problem.ID, Success: false, Error: localize(c, err)}
 		}
 
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
@@ -201,7 +217,16 @@ type solverResponse struct {
 }
 
 // callHopfieldServiceWithContext calls the Python service to solve the problem with context
-func (h *AssignmentHandler) callHopfieldServiceWithContext(ctx context.Context, req models.AssignmentRequest) (*models.AssignmentResponse, error) {
+func (h *AssignmentHandler) callHopfieldServiceWithContext(ctx context.Context, req models.AssignmentRequest) (result *models.AssignmentResponse, err error) {
+	start := time.Now()
+	defer func() {
+		iterations := 0
+		if result != nil {
+			iterations = result.Iterations
+		}
+		metrics.ObserveSolverCall(len(req.CostMatrix), time.Since(start), iterations, err)
+	}()
+
 	// Prepare the request
 	reqBody, err := json.Marshal(req)
 	if err != nil {

@@ -9,8 +9,10 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"hopfield-assignment-api/internal/handlers"
+	"hopfield-assignment-api/pkg/metrics"
 	"hopfield-assignment-api/pkg/middleware"
 )
 
@@ -41,12 +43,22 @@ func main() {
 	// Add CORS middleware
 	router.Use(middleware.CORS())
 
+	// Response language from Accept-Language (English or Spanish)
+	router.Use(middleware.Language())
+
+	// Prometheus metrics: every request, and the calls to the solver (see pkg/metrics)
+	router.Use(metrics.Middleware())
+
 	// Health endpoints
 	healthHandler := handlers.NewHealthHandler(logger)
 	router.GET("/health", healthHandler.HealthCheck)
 	router.GET("/health/ready", healthHandler.ReadinessCheck)
 	router.GET("/health/live", healthHandler.LivenessCheck)
 	router.GET("/time", healthHandler.CurrentTime)
+
+	// Prometheus scrape endpoint. Deliberately outside the API-key group so Prometheus needs no
+	// secret; it is not routed through nginx (only /api/ is), so it is reachable on the gateway port only.
+	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
 	// Assignment endpoints — protected by API key authentication.
 	assignmentHandler := handlers.NewAssignmentHandler(logger)
