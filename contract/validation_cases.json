@@ -1,0 +1,28 @@
+{
+  "_comment": "Single source of truth for what the gateway (Go) and the solver (Python) must accept. Both test suites load this file; contract/openapi.yaml documents the same limits and a test keeps it in step.",
+  "limits": {
+    "matrix_size": {"min": 2, "max": 50},
+    "cost_value": {"min": 0, "max": 1000000000},
+    "batch_size": {"max": 100}
+  },
+  "matrix_cases": [
+    {"name": "2x2 integers", "matrix": [[1, 2], [3, 4]], "valid": true},
+    {"name": "all zero costs", "matrix": [[0, 0], [0, 0]], "valid": true},
+    {"name": "fractional costs", "matrix": [[0.5, 1.5], [2.5, 3.5]], "valid": true},
+    {"name": "cost at the maximum", "matrix": [[1000000000, 0], [0, 1000000000]], "valid": true},
+    {"name": "cost above the maximum", "matrix": [[1000000001, 0], [0, 1]], "valid": false},
+    {"name": "negative cost", "matrix": [[1, -1], [3, 4]], "valid": false},
+    {"name": "1x1 is too small", "matrix": [[5]], "valid": false},
+    {"name": "empty matrix", "matrix": [], "valid": false},
+    {"name": "ragged: short second row", "matrix": [[1, 2], [3]], "valid": false},
+    {"name": "not square: 2x3", "matrix": [[1, 2, 3], [4, 5, 6]], "valid": false},
+    {"name": "not square: 3x2", "matrix": [[1, 2], [3, 4], [5, 6]], "valid": false},
+    {"name": "50x50 is the largest allowed", "generate": {"size": 50, "fill": 1}, "valid": true},
+    {"name": "51x51 is too large", "generate": {"size": 51, "fill": 1}, "valid": false}
+  ],
+  "batch_size_cases": [
+    {"name": "1 problem", "size": 1, "valid": true},
+    {"name": "100 problems is the largest batch", "size": 100, "valid": true},
+    {"name": "101 problems is too many", "size": 101, "valid": false}
+  ]
+}
