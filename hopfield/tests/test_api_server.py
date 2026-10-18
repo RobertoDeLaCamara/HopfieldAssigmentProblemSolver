@@ -11,25 +11,24 @@ import os
 # Add src directory to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-# Import both API servers for testing
-from api_server import app as original_app
-from api_server_enhanced import app as enhanced_app
+# There is one solver API (api_server.py). It used to coexist with a simpler
+# api_server_enhanced.py; the `client` and `enhanced_client` fixtures are kept as
+# two names for the same app so the tests written for either keep working.
+from api_server import app
 
 
 @pytest.fixture
 def client():
-    """Test client for the original Flask application."""
-    original_app.config['TESTING'] = True
-    with original_app.test_client() as client:
+    """Test client for the Flask application."""
+    app.config['TESTING'] = True
+    with app.test_client() as client:
         yield client
 
 
 @pytest.fixture
-def enhanced_client():
-    """Test client for the enhanced Flask application."""
-    enhanced_app.config['TESTING'] = True
-    with enhanced_app.test_client() as client:
-        yield client
+def enhanced_client(client):
+    """Alias of `client` (kept for the tests that were written against the enhanced app)."""
+    return client
 
 
 class TestHealthEndpoints:
@@ -436,13 +435,11 @@ class TestBatchEndpoint:
                              data=json.dumps(data),
                              content_type='application/json')
         
-        assert response.status_code == 200
+        # A problem without an id rejects the whole batch with a message naming it
+        assert response.status_code == 400
         result = json.loads(response.data)
-        assert result['success'] is True
-        
-        # The problem without ID should fail
-        problem_result = result['results'][0]
-        assert problem_result['success'] is False
+        assert result['success'] is False
+        assert "missing required field 'id'" in result['error']
 
 
 class TestMetricsEndpoint:

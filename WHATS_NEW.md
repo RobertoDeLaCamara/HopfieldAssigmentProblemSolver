@@ -38,7 +38,7 @@ The repository has been significantly enhanced with production-ready features. S
 - `validation.py` - Enhanced validation with detailed errors
 - `logging_config.py` - Structured logging configuration
 - `metrics.py` - Metrics collection and tracking
-- `api_server_enhanced.py` - Enhanced API with all features
+- `api_server.py` - Enhanced API with all features
 - Updated to Flask 3.0.2, NumPy 1.26.4, pytest 8.0.0
 
 ### 🔷 Go Enhancements
@@ -53,7 +53,7 @@ The repository has been significantly enhanced with production-ready features. S
 **Development Mode** (no authentication):
 ```bash
 cd hopfield/src
-python api_server_enhanced.py
+python api_server.py
 ```
 
 **Production Mode** (with authentication):
@@ -62,7 +62,7 @@ export API_KEY="your-secure-api-key-here"
 export JSON_LOGGING="true"
 export LOG_LEVEL="INFO"
 cd hopfield/src
-gunicorn --bind 0.0.0.0:5000 --workers 4 api_server_enhanced:app
+gunicorn --bind 0.0.0.0:5000 --workers 4 api_server:app
 ```
 
 ### New Endpoints
@@ -186,11 +186,11 @@ If you're using the original `api_server.py`:
 # From:
 python src/api_server.py
 # To:
-python src/api_server_enhanced.py
+python src/api_server.py
 ```
 
 **Option 2: Gradual Migration**
-- Start with `api_server_enhanced.py` in development
+- Start with `api_server.py` in development
 - Test new features (validation, metrics, logging)
 - Enable authentication when ready
 - Switch production after validation

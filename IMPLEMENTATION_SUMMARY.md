@@ -166,7 +166,7 @@
 ### Phase 9: Enhanced API Server (COMPLETED)
 
 21. **✅ Enhanced API Server**
-    - File: hopfield/src/api_server_enhanced.py
+    - File: hopfield/src/api_server.py
     - Integrated validation module
     - Integrated logging module
     - Integrated metrics module
@@ -211,7 +211,7 @@
 - `hopfield/src/validation.py`
 - `hopfield/src/logging_config.py`
 - `hopfield/src/metrics.py`
-- `hopfield/src/api_server_enhanced.py`
+- `hopfield/src/api_server.py`
 - `hopfield/requirements-dev.txt`
 
 ### Go Modules (2)
@@ -393,7 +393,7 @@ pre-commit install
 **Development Mode** (no authentication):
 ```bash
 cd hopfield/src
-python api_server_enhanced.py
+python api_server.py
 ```
 
 **Production Mode** (with authentication):
@@ -401,7 +401,7 @@ python api_server_enhanced.py
 export API_KEY="your-secure-api-key-here"
 export JSON_LOGGING="true"
 export LOG_LEVEL="INFO"
-gunicorn --bind 0.0.0.0:5000 --workers 4 api_server_enhanced:app
+gunicorn --bind 0.0.0.0:5000 --workers 4 api_server:app
 ```
 
 ### 4. Test New Endpoints
