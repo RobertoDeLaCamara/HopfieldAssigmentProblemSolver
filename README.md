@@ -142,7 +142,7 @@ curl -X POST http://localhost:8080/solve -H "X-API-Key: $API_KEY" -H "Content-Ty
 # {"success":false,"error":"La matriz de costes debe ser cuadrada. La fila 0 tiene 3 elementos y se esperaban 2"}
 ```
 
-Translated: matrix and batch validation errors and "invalid request format". Not translated: errors that come from the Python solver, which pass through unchanged. Messages live in `api/pkg/i18n`; a test keeps the Spanish and English catalogs in step, so adding a language or a message means adding it to both.
+Translated: matrix and batch validation errors, CSV upload errors, and "invalid request format". Not translated: errors that come from the Python solver, which pass through unchanged. Messages live in `api/pkg/i18n`; a test keeps the Spanish and English catalogs in step, so adding a language or a message means adding it to both.
 
 ### Health Check
 

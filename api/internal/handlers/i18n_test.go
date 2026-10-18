@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"hopfield-assignment-api/internal/models"
@@ -117,4 +118,68 @@ func TestContentLanguageHeader(t *testing.T) {
 	assert.Equal(t, "es", w.Header().Get("Content-Language"))
 	w, _ = postJSON(t, "/solve", "", models.AssignmentRequest{CostMatrix: [][]float64{{1, 2, 3}, {4, 5, 6}}}, false)
 	assert.Equal(t, "en", w.Header().Get("Content-Language"))
+}
+
+func serveCSVIn(t *testing.T, lang, field, content string) *httptest.ResponseRecorder {
+	t.Helper()
+	router := setupTestRouter()
+	router.Use(middleware.Language())
+	handler := NewAssignmentHandler(logrus.New())
+	handler.httpClient = &MockHTTPClient{} // never reached: every case below is rejected first
+	router.POST("/solve/csv", handler.SolveCSV)
+
+	body, ct := csvUpload(t, field, content)
+	req := httptest.NewRequest("POST", "/solve/csv", body)
+	req.Header.Set("Content-Type", ct)
+	if lang != "" {
+		req.Header.Set("Accept-Language", lang)
+	}
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	return w
+}
+
+func TestCSVErrors_AreTranslated(t *testing.T) {
+	cases := []struct {
+		name, content, en, es string
+	}{
+		{"non-numeric cell", "1,2\n3,x\n",
+			`Invalid CSV: row 2, column 2 is not a number: "x"`,
+			`CSV no válido: la fila 2, columna 2 no es un número: "x"`},
+		{"ragged rows", "1,2\n3\n",
+			"Invalid CSV: row 2 has 1 values but row 1 has 2",
+			"CSV no válido: la fila 2 tiene 1 valores pero la fila 1 tiene 2"},
+		{"empty file", "",
+			"Invalid CSV: the CSV has no data",
+			"CSV no válido: el CSV no contiene datos"},
+		{"empty cell", "1,\n3,4\n",
+			"Invalid CSV: row 1, column 2 is empty",
+			"CSV no válido: la fila 1, columna 2 está vacía"},
+		// not a CSV problem but a matrix one: the same Spanish as the JSON endpoint
+		{"not square", "1,2,3\n4,5,6\n",
+			"The cost matrix must be square. Row 0 has 3 elements, expected 2",
+			"La matriz de costes debe ser cuadrada. La fila 0 tiene 3 elementos y se esperaban 2"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			en := serveCSVIn(t, "", "file", tc.content)
+			assert.Equal(t, http.StatusBadRequest, en.Code)
+			assert.Equal(t, tc.en, errorOf(t, en))
+
+			es := serveCSVIn(t, "es-ES,es;q=0.9", "file", tc.content)
+			assert.Equal(t, http.StatusBadRequest, es.Code)
+			assert.Equal(t, tc.es, errorOf(t, es))
+		})
+	}
+}
+
+func TestCSVUploadProblems_AreTranslated(t *testing.T) {
+	w := serveCSVIn(t, "es", "matrix", "1,2\n3,4\n")
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Equal(t, `Envía el CSV como multipart/form-data en un campo llamado "file"`, errorOf(t, w))
+
+	big := strings.Repeat("1,2\n", maxCSVUploadBytes/4+10)
+	w = serveCSVIn(t, "es", "file", big)
+	assert.Equal(t, http.StatusRequestEntityTooLarge, w.Code)
+	assert.Equal(t, "El CSV supera los 1048576 bytes", errorOf(t, w))
 }

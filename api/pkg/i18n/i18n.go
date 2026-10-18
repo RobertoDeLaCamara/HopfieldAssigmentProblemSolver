@@ -30,6 +30,18 @@ const (
 	BatchTooLarge        = "batch_too_large"
 	BatchEmpty           = "batch_empty"
 	InvalidRequestFormat = "invalid_request_format"
+
+	CSVNoData      = "csv_no_data"
+	CSVEmptyCell   = "csv_empty_cell"
+	CSVNotNumber   = "csv_not_number"
+	CSVNotFinite   = "csv_not_finite"
+	CSVRagged      = "csv_ragged"
+	CSVTooManyRows = "csv_too_many_rows"
+	CSVMalformed   = "csv_malformed"
+	CSVInvalid     = "csv_invalid"
+	CSVTooLarge    = "csv_too_large"
+	CSVMissingFile = "csv_missing_file"
+	CSVUnreadable  = "csv_unreadable"
 )
 
 // catalog[lang][code] is a fmt format string; every language uses the same verbs in the same order.
@@ -44,6 +56,18 @@ var catalog = map[Lang]map[string]string{
 		BatchTooLarge:        "Batch size of %d exceeds the maximum of %d problems. Please split it into smaller batches",
 		BatchEmpty:           "At least one problem is required in the batch",
 		InvalidRequestFormat: "Invalid request format: %s",
+
+		CSVNoData:      "the CSV has no data",
+		CSVEmptyCell:   "row %d, column %d is empty",
+		CSVNotNumber:   "row %d, column %d is not a number: %q",
+		CSVNotFinite:   "row %d, column %d is not a finite number: %q",
+		CSVRagged:      "row %d has %d values but row 1 has %d",
+		CSVTooManyRows: "the CSV has more than %d rows",
+		CSVMalformed:   "malformed CSV: %s",
+		CSVInvalid:     "Invalid CSV: %s",
+		CSVTooLarge:    "The CSV is larger than %d bytes",
+		CSVMissingFile: `Send the CSV as multipart/form-data in a field named "file"`,
+		CSVUnreadable:  "Could not read the uploaded file",
 	},
 	Spanish: {
 		MatrixEmpty:          "La matriz de costes no puede estar vacía",
@@ -55,6 +79,18 @@ var catalog = map[Lang]map[string]string{
 		BatchTooLarge:        "Un lote de %d problemas supera el máximo de %d. Divídelo en lotes más pequeños",
 		BatchEmpty:           "Se requiere al menos un problema en el lote",
 		InvalidRequestFormat: "Formato de solicitud no válido: %s",
+
+		CSVNoData:      "el CSV no contiene datos",
+		CSVEmptyCell:   "la fila %d, columna %d está vacía",
+		CSVNotNumber:   "la fila %d, columna %d no es un número: %q",
+		CSVNotFinite:   "la fila %d, columna %d no es un número finito: %q",
+		CSVRagged:      "la fila %d tiene %d valores pero la fila 1 tiene %d",
+		CSVTooManyRows: "el CSV tiene más de %d filas",
+		CSVMalformed:   "CSV mal formado: %s",
+		CSVInvalid:     "CSV no válido: %s",
+		CSVTooLarge:    "El CSV supera los %d bytes",
+		CSVMissingFile: `Envía el CSV como multipart/form-data en un campo llamado "file"`,
+		CSVUnreadable:  "No se pudo leer el archivo subido",
 	},
 }
 

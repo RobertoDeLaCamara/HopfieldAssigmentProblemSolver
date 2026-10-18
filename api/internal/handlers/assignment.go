@@ -85,14 +85,14 @@ func (h *AssignmentHandler) SolveCSV(c *gin.Context) {
 		if errors.As(err, &tooLarge) {
 			c.JSON(http.StatusRequestEntityTooLarge, models.APIResponse{
 				Success: false,
-				Error:   fmt.Sprintf("The CSV is larger than %d bytes", maxCSVUploadBytes),
+				Error:   i18n.T(middleware.LanguageFrom(c), i18n.CSVTooLarge, maxCSVUploadBytes),
 			})
 			return
 		}
 		h.logger.WithError(err).Warn("Missing CSV file")
 		c.JSON(http.StatusBadRequest, models.APIResponse{
 			Success: false,
-			Error:   `Send the CSV as multipart/form-data in a field named "file"`,
+			Error:   i18n.T(middleware.LanguageFrom(c), i18n.CSVMissingFile),
 		})
 		return
 	}
@@ -100,7 +100,7 @@ func (h *AssignmentHandler) SolveCSV(c *gin.Context) {
 	file, err := fileHeader.Open()
 	if err != nil {
 		h.logger.WithError(err).Warn("Could not open the uploaded CSV")
-		c.JSON(http.StatusBadRequest, models.APIResponse{Success: false, Error: "Could not read the uploaded file"})
+		c.JSON(http.StatusBadRequest, models.APIResponse{Success: false, Error: i18n.T(middleware.LanguageFrom(c), i18n.CSVUnreadable)})
 		return
 	}
 	defer func() { _ = file.Close() }()
@@ -108,7 +108,10 @@ func (h *AssignmentHandler) SolveCSV(c *gin.Context) {
 	matrix, err := models.ParseCSVMatrix(file)
 	if err != nil {
 		h.logger.WithError(err).Warn("Invalid CSV")
-		c.JSON(http.StatusBadRequest, models.APIResponse{Success: false, Error: "Invalid CSV: " + err.Error()})
+		c.JSON(http.StatusBadRequest, models.APIResponse{
+			Success: false,
+			Error:   i18n.T(middleware.LanguageFrom(c), i18n.CSVInvalid, localize(c, err)),
+		})
 		return
 	}
 
