@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"hopfield-assignment-api/internal/models"
+	"hopfield-assignment-api/pkg/i18n"
+	"hopfield-assignment-api/pkg/middleware"
 	"io"
 	"net/http"
 	"os"
@@ -15,6 +17,16 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
+
+// localize renders an error for the client in the request's language. Only validation errors have
+// translations; anything else (solver or network errors) is returned as is.
+func localize(c *gin.Context, err error) string {
+	var ve *models.ValidationError
+	if errors.As(err, &ve) {
+		return ve.Localized(middleware.LanguageFrom(c))
+	}
+	return err.Error()
+}
 
 // HTTPDoer is an interface for making HTTP requests (allows mocking in tests)
 type HTTPDoer interface {
@@ -51,7 +63,7 @@ func (h *AssignmentHandler) SolveAssignment(c *gin.Context) {
 		h.logger.WithError(err).Warn("Invalid request format")
 		c.JSON(http.StatusBadRequest, models.APIResponse{
 			Success: false,
-			Error:   "Invalid request format: " + err.Error(),
+			Error:   i18n.T(middleware.LanguageFrom(c), i18n.InvalidRequestFormat, err.Error()),
 		})
 		return
 	}
@@ -110,7 +122,7 @@ func (h *AssignmentHandler) validateAndSolve(c *gin.Context, req models.Assignme
 		h.logger.WithError(err).Warn("Validation error")
 		c.JSON(http.StatusBadRequest, models.APIResponse{
 			Success: false,
-			Error:   err.Error(),
+			Error:   localize(c, err),
 		})
 		return
 	}
@@ -142,7 +154,7 @@ func (h *AssignmentHandler) SolveBatch(c *gin.Context) {
 		h.logger.WithError(err).Warn("Error parsing batch request")
 		c.JSON(http.StatusBadRequest, models.APIResponse{
 			Success: false,
-			Error:   "Invalid request format: " + err.Error(),
+			Error:   i18n.T(middleware.LanguageFrom(c), i18n.InvalidRequestFormat, err.Error()),
 		})
 		return
 	}
@@ -150,13 +162,13 @@ func (h *AssignmentHandler) SolveBatch(c *gin.Context) {
 	if len(req.Problems) == 0 {
 		c.JSON(http.StatusBadRequest, models.APIResponse{
 			Success: false,
-			Error:   "At least one problem is required in the batch",
+			Error:   i18n.T(middleware.LanguageFrom(c), i18n.BatchEmpty),
 		})
 		return
 	}
 
 	if err := models.ValidateBatchSize(len(req.Problems)); err != nil {
-		c.JSON(http.StatusBadRequest, models.APIResponse{Success: false, Error: err.Error()})
+		c.JSON(http.StatusBadRequest, models.APIResponse{Success: false, Error: localize(c, err)})
 		return
 	}
 
@@ -169,7 +181,7 @@ func (h *AssignmentHandler) SolveBatch(c *gin.Context) {
 		}
 
 		if err := assignmentReq.Validate(); err != nil {
-			return models.BatchResult{ID: problem.ID, Success: false, Error: err.Error()}
+			return models.BatchResult{ID: problem.ID, Success: false, Error: localize(c, err)}
 		}
 
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)

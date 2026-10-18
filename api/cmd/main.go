@@ -41,6 +41,9 @@ func main() {
 	// Add CORS middleware
 	router.Use(middleware.CORS())
 
+	// Response language from Accept-Language (English or Spanish)
+	router.Use(middleware.Language())
+
 	// Health endpoints
 	healthHandler := handlers.NewHealthHandler(logger)
 	router.GET("/health", healthHandler.HealthCheck)

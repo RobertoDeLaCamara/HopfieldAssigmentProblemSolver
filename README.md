@@ -132,6 +132,18 @@ Format: one matrix row per line, numeric cells, no header. Comma or semicolon se
 
 Errors are `400` with the position of the problem, for example `Invalid CSV: row 2, column 2 is not a number: "x"` or `Invalid CSV: row 2 has 1 values but row 1 has 2`; an upload above 1 MiB is `413`. The field must be named `file`.
 
+### Error language
+
+The gateway answers its own error messages in English or Spanish according to the `Accept-Language` header: Spanish when Spanish is the best supported language (`es`, `es-ES`, `es-ES,es;q=0.9,en;q=0.8`), English otherwise or when there is no header. The response carries `Content-Language` and `Vary: Accept-Language`.
+
+```bash
+curl -X POST http://localhost:8080/solve -H "X-API-Key: $API_KEY" -H "Content-Type: application/json" \
+  -H "Accept-Language: es" -d '{"cost_matrix": [[1, 2, 3], [4, 5, 6]]}'
+# {"success":false,"error":"La matriz de costes debe ser cuadrada. La fila 0 tiene 3 elementos y se esperaban 2"}
+```
+
+Translated: matrix and batch validation errors and "invalid request format". Not translated: errors that come from the Python solver, which pass through unchanged. Messages live in `api/pkg/i18n`; a test keeps the Spanish and English catalogs in step, so adding a language or a message means adding it to both.
+
 ### Health Check
 
 ```bash

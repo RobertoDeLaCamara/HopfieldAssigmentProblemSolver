@@ -2,7 +2,8 @@ package models
 
 import (
 	"encoding/json"
-	"fmt"
+
+	"hopfield-assignment-api/pkg/i18n"
 )
 
 // AssignmentRequest represents the request to solve an assignment problem
@@ -71,10 +72,7 @@ const (
 // ValidateBatchSize rejects a batch with more problems than the solver accepts.
 func ValidateBatchSize(n int) error {
 	if n > MaxBatchSize {
-		return &ValidationError{
-			Field:   "problems",
-			Message: fmt.Sprintf("Batch size of %d exceeds the maximum of %d problems. Please split it into smaller batches", n, MaxBatchSize),
-		}
+		return newValidationError("problems", i18n.BatchTooLarge, n, MaxBatchSize)
 	}
 	return nil
 }
@@ -82,41 +80,26 @@ func ValidateBatchSize(n int) error {
 // Validate validates the cost matrix
 func (r *AssignmentRequest) Validate() error {
 	if len(r.CostMatrix) == 0 {
-		return &ValidationError{Field: "cost_matrix", Message: "The cost matrix cannot be empty"}
+		return newValidationError("cost_matrix", i18n.MatrixEmpty)
 	}
 
 	n := len(r.CostMatrix)
 	if n < MinMatrixSize {
-		return &ValidationError{
-			Field:   "cost_matrix",
-			Message: fmt.Sprintf("Matrix size %dx%d is too small. Minimum size is %dx%d", n, n, MinMatrixSize, MinMatrixSize),
-		}
+		return newValidationError("cost_matrix", i18n.MatrixTooSmall, n, n, MinMatrixSize, MinMatrixSize)
 	}
 	if n > MaxMatrixSize {
-		return &ValidationError{
-			Field:   "cost_matrix",
-			Message: fmt.Sprintf("Matrix size %dx%d exceeds the maximum allowed size of %dx%d", n, n, MaxMatrixSize, MaxMatrixSize),
-		}
+		return newValidationError("cost_matrix", i18n.MatrixTooLarge, n, n, MaxMatrixSize, MaxMatrixSize)
 	}
 	for i, row := range r.CostMatrix {
 		if len(row) != n {
-			return &ValidationError{
-				Field:   "cost_matrix",
-				Message: fmt.Sprintf("The cost matrix must be square. Row %d has %d elements, expected %d", i, len(row), n),
-			}
+			return newValidationError("cost_matrix", i18n.MatrixNotSquare, i, len(row), n)
 		}
 		for j, cost := range row {
 			if cost < 0 {
-				return &ValidationError{
-					Field:   "cost_matrix",
-					Message: fmt.Sprintf("Cost at position [%d][%d] cannot be negative: %f", i, j, cost),
-				}
+				return newValidationError("cost_matrix", i18n.CostNegative, i, j, cost)
 			}
 			if cost > MaxCostValue {
-				return &ValidationError{
-					Field:   "cost_matrix",
-					Message: fmt.Sprintf("Cost at position [%d][%d] is %g, which exceeds the maximum allowed value of %g", i, j, cost, MaxCostValue),
-				}
+				return newValidationError("cost_matrix", i18n.CostTooLarge, i, j, cost, MaxCostValue)
 			}
 		}
 	}
@@ -124,10 +107,30 @@ func (r *AssignmentRequest) Validate() error {
 	return nil
 }
 
-// ValidationError represents a validation error
+// ValidationError represents a validation error. Message is the English text (what Error returns);
+// Code and Args let Localized render the same error in another language (see pkg/i18n).
 type ValidationError struct {
 	Field   string
 	Message string
+	Code    string
+	Args    []interface{}
+}
+
+func newValidationError(field, code string, args ...interface{}) *ValidationError {
+	return &ValidationError{
+		Field:   field,
+		Code:    code,
+		Args:    args,
+		Message: i18n.T(i18n.English, code, args...),
+	}
+}
+
+// Localized renders the error in the given language (English when there is no translation).
+func (e *ValidationError) Localized(lang i18n.Lang) string {
+	if e.Code == "" {
+		return e.Message
+	}
+	return i18n.T(lang, e.Code, e.Args...)
 }
 
 func (e *ValidationError) Error() string {
