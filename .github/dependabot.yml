@@ -1,14 +1,5 @@
 version: 2
 updates:
-  # Update GitHub Actions
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    labels:
-      - "dependencies"
-      - "github-actions"
-  
   # Update Python dependencies
   - package-ecosystem: "pip"
     directory: "/hopfield"
