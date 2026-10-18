@@ -12,9 +12,11 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"hopfield-assignment-api/internal/models"
 )
 
@@ -477,4 +479,47 @@ func TestAssignmentHandler_CallHopfieldService_ResultDecoding(t *testing.T) {
 			assert.Equal(t, tc.wantAssig, got.Assignments)
 		})
 	}
+}
+
+// The gateway reports each call to the solver as a metric (pkg/metrics).
+func TestAssignmentHandler_CallHopfieldService_UpdatesSolverMetrics(t *testing.T) {
+	count := func(outcome string) float64 {
+		mfs, err := prometheus.DefaultGatherer.Gather()
+		require.NoError(t, err)
+		for _, mf := range mfs {
+			if mf.GetName() != "hopfield_gateway_solver_requests_total" {
+				continue
+			}
+			for _, m := range mf.Metric {
+				for _, l := range m.Label {
+					if l.GetName() == "outcome" && l.GetValue() == outcome {
+						return m.Counter.GetValue()
+					}
+				}
+			}
+		}
+		return 0
+	}
+
+	handler := NewAssignmentHandler(logrus.New())
+	mockClient := &MockHTTPClient{}
+	handler.httpClient = mockClient
+	mockClient.On("Do", mock.Anything).Return(&http.Response{
+		StatusCode: http.StatusOK,
+		Body:       createMockResponseBody(t, true, createMockAssignmentResponse()),
+	}, nil).Once()
+	mockClient.On("Do", mock.Anything).Return(nil, assert.AnError).Once()
+
+	okBefore, errBefore := count("success"), count("error")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	req := models.AssignmentRequest{CostMatrix: [][]float64{{1, 2}, {3, 4}}}
+
+	_, err := handler.callHopfieldServiceWithContext(ctx, req)
+	require.NoError(t, err)
+	_, err = handler.callHopfieldServiceWithContext(ctx, req)
+	require.Error(t, err)
+
+	assert.Equal(t, okBefore+1, count("success"))
+	assert.Equal(t, errBefore+1, count("error"))
 }

@@ -144,6 +144,35 @@ curl -X POST http://localhost:8080/solve -H "X-API-Key: $API_KEY" -H "Content-Ty
 
 Translated: matrix and batch validation errors, CSV upload errors, and "invalid request format". Not translated: errors that come from the Python solver, which pass through unchanged. Messages live in `api/pkg/i18n`; a test keeps the Spanish and English catalogs in step, so adding a language or a message means adding it to both.
 
+### Metrics (Prometheus)
+
+The gateway exposes Prometheus metrics at `GET /metrics` on its own port (`:8080`). The endpoint is not behind the API key so Prometheus needs no secret, and nginx does not route it (only `/api/` is proxied), so it is reachable on the gateway port only.
+
+| Metric | Type | Labels | What |
+|---|---|---|---|
+| `hopfield_gateway_http_requests_total` | counter | `method`, `path`, `status` | Requests handled. `path` is the route template (`/solve/batch`), unknown routes are `unmatched`. |
+| `hopfield_gateway_http_request_duration_seconds` | histogram | `method`, `path` | Request latency. |
+| `hopfield_gateway_http_requests_in_flight` | gauge | | Requests being served now. |
+| `hopfield_gateway_solver_requests_total` | counter | `outcome` (`success`/`error`) | Calls from the gateway to the Python solver. |
+| `hopfield_gateway_solver_duration_seconds` | histogram | | Time the solver took to answer (network included). |
+| `hopfield_gateway_solver_matrix_size` | histogram | | Rows of the matrices sent to the solver. |
+| `hopfield_gateway_solver_iterations` | histogram | | Iterations of successful solves. |
+
+The solver does not report a "converged" flag. It stops at its iteration cap (1000) when it does not converge, so the convergence rate is the share of solves below the cap:
+
+```promql
+sum(rate(hopfield_gateway_solver_iterations_bucket{le="999"}[5m])) / sum(rate(hopfield_gateway_solver_iterations_count[5m]))
+```
+
+Prometheus scrape job:
+
+```yaml
+scrape_configs:
+  - job_name: hopfield-gateway
+    static_configs:
+      - targets: ['hopfield-api-gateway:8080']
+```
+
 ### Health Check
 
 ```bash

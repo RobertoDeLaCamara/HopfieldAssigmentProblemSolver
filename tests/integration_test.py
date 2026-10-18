@@ -232,6 +232,20 @@ class TestSystemIntegration:
         assert result["success"] is False
         assert "row 2, column 2" in result["error"]
 
+    def test_metrics_endpoint_exposes_prometheus_metrics(self):
+        """/metrics serves Prometheus text with the request and solver metrics."""
+        requests.post(f"{self.api_base_url}/solve", json={"cost_matrix": [[1, 2], [3, 4]]},
+                      headers=self.headers, timeout=self.timeout)
+
+        response = requests.get(f"{self.api_base_url}/metrics", timeout=self.timeout)
+
+        assert response.status_code == 200
+        assert response.headers["Content-Type"].startswith("text/plain")
+        body = response.text
+        assert 'hopfield_gateway_http_requests_total{method="POST",path="/solve",status="200"}' in body
+        assert "hopfield_gateway_solver_duration_seconds_count" in body
+        assert "hopfield_gateway_solver_iterations_bucket" in body
+
     def test_error_handling_missing_field(self):
         """Test error handling with missing field."""
         data = {"invalid_field": "test"}

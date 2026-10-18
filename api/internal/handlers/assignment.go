@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"hopfield-assignment-api/internal/models"
 	"hopfield-assignment-api/pkg/i18n"
+	"hopfield-assignment-api/pkg/metrics"
 	"hopfield-assignment-api/pkg/middleware"
 	"io"
 	"net/http"
@@ -216,7 +217,16 @@ type solverResponse struct {
 }
 
 // callHopfieldServiceWithContext calls the Python service to solve the problem with context
-func (h *AssignmentHandler) callHopfieldServiceWithContext(ctx context.Context, req models.AssignmentRequest) (*models.AssignmentResponse, error) {
+func (h *AssignmentHandler) callHopfieldServiceWithContext(ctx context.Context, req models.AssignmentRequest) (result *models.AssignmentResponse, err error) {
+	start := time.Now()
+	defer func() {
+		iterations := 0
+		if result != nil {
+			iterations = result.Iterations
+		}
+		metrics.ObserveSolverCall(len(req.CostMatrix), time.Since(start), iterations, err)
+	}()
+
 	// Prepare the request
 	reqBody, err := json.Marshal(req)
 	if err != nil {
