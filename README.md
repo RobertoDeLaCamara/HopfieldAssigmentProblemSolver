@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Go Version](https://img.shields.io/badge/go-1.25+-blue.svg)](https://golang.org/)
-[![Python Version](https://img.shields.io/badge/python-3.11+-blue.svg)](https://python.org/)
+[![Python Version](https://img.shields.io/badge/python-3.12+-blue.svg)](https://python.org/)
 
 A high-performance API service for solving assignment problems using Hopfield neural networks. The system consists of a Go-based API gateway that interfaces with a Python-based Hopfield solver service, all containerized with Docker for easy deployment.
 
@@ -25,7 +25,7 @@ A high-performance API service for solving assignment problems using Hopfield ne
 - Docker Compose 2.0+
 - 2GB RAM minimum
 - 1GB disk space
-- Python 3.11+ (for local development)
+- Python 3.12+ (for local development; the images use 3.14)
 - Go 1.21+ (for local development)
 
 ### Installation
