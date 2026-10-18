@@ -60,7 +60,8 @@ clean: ## Clean containers, images and volumes
 # throwaway containers, like Jenkins does. The Python image is the one hopfield/Dockerfile builds on.
 PYTHON_IMAGE ?= $(shell sed -n 's/^FROM \(python:[^ ]*\) AS builder/\1/p' hopfield/Dockerfile)
 GO_IMAGE     ?= $(shell sed -n 's/^FROM \(golang:[^ ]*\) AS builder/\1/p' api/Dockerfile)
-PY_TEST = docker run --rm -v "$(CURDIR)/hopfield:/app" -w /app $(PYTHON_IMAGE) sh -c
+# The repo root is mounted (not only hopfield/ or api/) so tests can read shared files such as contract/.
+PY_TEST = docker run --rm -v "$(CURDIR):/repo" -w /repo/hopfield $(PYTHON_IMAGE) sh -c
 
 test: test-unit test-go ## Run all tests (throwaway containers)
 
@@ -70,7 +71,7 @@ test-unit: ## Run the Python tests
 
 test-go: ## Run the Go tests
 	@echo "$(GREEN)Running Go tests...$(NC)"
-	docker run --rm -v "$(CURDIR)/api:/src" -w /src $(GO_IMAGE) go test ./...
+	docker run --rm -v "$(CURDIR):/repo" -w /repo/api $(GO_IMAGE) go test ./...
 
 test-integration: ## Run integration tests only
 	@echo "$(GREEN)Running integration tests...$(NC)"

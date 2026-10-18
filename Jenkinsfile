@@ -83,10 +83,10 @@ pipeline {
                             try {
                                 sh '''
                                 docker run --name test-solver-$BUILD_NUMBER \
-                                    -v "$WORKSPACE/hopfield:/app" \
-                                    -w /app \
+                                    -v "$WORKSPACE:/repo" \
+                                    -w /repo/hopfield \
                                     python:3.14-slim \
-                                    sh -c "pip install --quiet -r requirements.txt pytest pytest-cov && python -m pytest tests/ -v \
+                                    sh -c "pip install --quiet -r requirements.txt -r requirements-test.txt && python -m pytest tests/ -v \
                                         --junitxml=test-results-python.xml \
                                         --cov=src \
                                         --cov-report=xml:coverage-python.xml \
@@ -113,8 +113,8 @@ pipeline {
                                 try {
                                     sh '''
                                     docker run --name test-api-$BUILD_NUMBER \
-                                        -v "$WORKSPACE/api:/app" \
-                                        -w /app \
+                                        -v "$WORKSPACE:/repo" \
+                                        -w /repo/api \
                                         golang:1.25-alpine \
                                         sh -c "apk add --no-cache git gcc musl-dev && go test ./... -v -coverprofile=coverage-go.out 2>&1 | tee test-output-go.txt; go tool cover -func=coverage-go.out"
                                     '''

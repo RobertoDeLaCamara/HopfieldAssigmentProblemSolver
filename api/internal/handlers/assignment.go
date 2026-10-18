@@ -105,6 +105,11 @@ func (h *AssignmentHandler) SolveBatch(c *gin.Context) {
 		return
 	}
 
+	if err := models.ValidateBatchSize(len(req.Problems)); err != nil {
+		c.JSON(http.StatusBadRequest, models.APIResponse{Success: false, Error: err.Error()})
+		return
+	}
+
 	// Process each problem with a per-iteration timeout context.
 	// The closure scopes `defer cancel()` to a single iteration, preventing
 	// timer/goroutine accumulation seen with `defer cancel()` inside a for loop.

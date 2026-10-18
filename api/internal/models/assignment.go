@@ -58,6 +58,27 @@ type HealthResponse struct {
 	Version string `json:"version"`
 }
 
+// Limits shared with the Python solver; both are checked against contract/validation_cases.json.
+// A request the gateway accepts but the solver rejects would come back as an opaque 500.
+const (
+	MinMatrixSize = 2
+	MaxMatrixSize = 50
+	MinCostValue  = 0.0
+	MaxCostValue  = 1e9
+	MaxBatchSize  = 100
+)
+
+// ValidateBatchSize rejects a batch with more problems than the solver accepts.
+func ValidateBatchSize(n int) error {
+	if n > MaxBatchSize {
+		return &ValidationError{
+			Field:   "problems",
+			Message: fmt.Sprintf("Batch size of %d exceeds the maximum of %d problems. Please split it into smaller batches", n, MaxBatchSize),
+		}
+	}
+	return nil
+}
+
 // Validate validates the cost matrix
 func (r *AssignmentRequest) Validate() error {
 	if len(r.CostMatrix) == 0 {
@@ -65,6 +86,18 @@ func (r *AssignmentRequest) Validate() error {
 	}
 
 	n := len(r.CostMatrix)
+	if n < MinMatrixSize {
+		return &ValidationError{
+			Field:   "cost_matrix",
+			Message: fmt.Sprintf("Matrix size %dx%d is too small. Minimum size is %dx%d", n, n, MinMatrixSize, MinMatrixSize),
+		}
+	}
+	if n > MaxMatrixSize {
+		return &ValidationError{
+			Field:   "cost_matrix",
+			Message: fmt.Sprintf("Matrix size %dx%d exceeds the maximum allowed size of %dx%d", n, n, MaxMatrixSize, MaxMatrixSize),
+		}
+	}
 	for i, row := range r.CostMatrix {
 		if len(row) != n {
 			return &ValidationError{
@@ -79,7 +112,12 @@ func (r *AssignmentRequest) Validate() error {
 					Message: fmt.Sprintf("Cost at position [%d][%d] cannot be negative: %f", i, j, cost),
 				}
 			}
-			_ = j // Avoid unused variable warning
+			if cost > MaxCostValue {
+				return &ValidationError{
+					Field:   "cost_matrix",
+					Message: fmt.Sprintf("Cost at position [%d][%d] is %g, which exceeds the maximum allowed value of %g", i, j, cost, MaxCostValue),
+				}
+			}
 		}
 	}
 

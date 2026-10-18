@@ -32,11 +32,13 @@ func TestAssignmentRequest_Validate(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name: "valid 1x1 matrix",
+			// The solver has always rejected 1x1 (minimum size 2); the gateway now agrees (contract/).
+			name: "1x1 matrix is too small",
 			request: AssignmentRequest{
 				CostMatrix: [][]float64{{5}},
 			},
-			expectError: false,
+			expectError: true,
+			errorField:  "cost_matrix",
 		},
 		{
 			name: "empty matrix",
