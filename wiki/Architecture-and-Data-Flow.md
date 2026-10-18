@@ -66,7 +66,7 @@ Client: POST /api/solve
   ├─ Generate request UUID (or accept X-Request-ID header)
   ├─ Log: method, path, client_ip, user_agent
   ├─ CORS preflight (OPTIONS) → handled
-  ├─ APIKeyAuth: if API_KEY set, check X-API-Key header
+  ├─ APIKeyAuth: check X-API-Key header (API_KEY is required in release mode)
   │   └─ subtle.ConstantTimeCompare() prevents timing attacks
   │   └─ 401 if missing, 403 if invalid
   │
@@ -131,11 +131,11 @@ Methods: GET, POST, PUT, DELETE, OPTIONS
 Headers: Origin, Content-Type, Accept-Encoding, X-CSRF-Token, Authorization
 Credentials: true
 
-**3. APIKeyAuth** — optional:
+**3. APIKeyAuth** — required in release mode:
 - Reads `API_KEY` env var
 - Checks `X-API-Key` header or `Authorization: Bearer <token>`
 - Uses `crypto/subtle.ConstantTimeCompare()` to prevent timing attacks
-- Skipped entirely if `API_KEY` not set
+- With `GIN_MODE=debug` and no `API_KEY` it is skipped (open mode, logs a warning); with `GIN_MODE=release` the gateway refuses to start without a key
 
 **4. RequestContext** — per-request metadata:
 - UUID from header or generated (`github.com/google/uuid`)

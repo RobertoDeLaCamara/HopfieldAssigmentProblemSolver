@@ -6,9 +6,9 @@ Direct Go gateway: `http://localhost:8080`
 
 ## Authentication
 
-Optional. Set `API_KEY` environment variable to enable.
+Required in release mode (`GIN_MODE=release`): the gateway refuses to start without `API_KEY`. Optional only with `GIN_MODE=debug`, where it runs open.
 
-When enabled:
+Send the key:
 ```
 X-API-Key: <value>
 # or

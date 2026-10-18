@@ -26,6 +26,8 @@ services:
       - PORT=8080
       - GIN_MODE=release
       - HOPFIELD_SERVICE_URL=http://hopfield-service:5000
+      # Throwaway key for ephemeral CI stacks; release mode refuses to start without one.
+      - API_KEY=${API_KEY:-ci-only-key}
     depends_on:
       hopfield-service:
         condition: service_healthy
