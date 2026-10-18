@@ -52,6 +52,7 @@ func main() {
 	assignmentHandler := handlers.NewAssignmentHandler(logger)
 	authed := router.Group("", middleware.APIKeyAuth(logger))
 	authed.POST("/solve", assignmentHandler.SolveAssignment)
+	authed.POST("/solve/csv", assignmentHandler.SolveCSV)
 	authed.POST("/solve/batch", assignmentHandler.SolveBatch)
 
 	// Start server
