@@ -20,7 +20,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/main.go
 
 # Runtime stage
-FROM alpine:3.23
+FROM alpine:3.24
 
 # Instalar ca-certificates para HTTPS
 RUN apk --no-cache add ca-certificates
