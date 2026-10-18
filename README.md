@@ -119,6 +119,19 @@ curl -X POST http://localhost/api/solve/batch \
   -d '{...}'
 ```
 
+### Solve from a CSV file
+
+Upload the cost matrix as a CSV file (`multipart/form-data`, field `file`). The response is the same as for `POST /solve`.
+
+```bash
+printf '1,2\n3,4\n' > costs.csv
+curl -X POST http://localhost:8080/solve/csv -F "file=@costs.csv"
+```
+
+Format: one matrix row per line, numeric cells, no header. Comma or semicolon separated (spreadsheets in Spanish locale export `;`), LF or CRLF line endings, optional UTF-8 BOM, blank lines ignored. The same rules as the JSON endpoint then apply (square matrix, 2x2 up to 50x50, costs from 0 to 1e9; see `contract/`).
+
+Errors are `400` with the position of the problem, for example `Invalid CSV: row 2, column 2 is not a number: "x"` or `Invalid CSV: row 2 has 1 values but row 1 has 2`; an upload above 1 MiB is `413`. The field must be named `file`.
+
 ### Health Check
 
 ```bash

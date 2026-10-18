@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"hopfield-assignment-api/internal/models"
 	"io"
@@ -55,6 +56,55 @@ func (h *AssignmentHandler) SolveAssignment(c *gin.Context) {
 		return
 	}
 
+	h.validateAndSolve(c, req)
+}
+
+// maxCSVUploadBytes caps the size of an uploaded CSV (a 50x50 matrix is a few KB).
+const maxCSVUploadBytes = 1 << 20
+
+// SolveCSV solves an assignment problem sent as a CSV file (multipart/form-data, field "file").
+// The response is the same as for POST /solve.
+func (h *AssignmentHandler) SolveCSV(c *gin.Context) {
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxCSVUploadBytes)
+
+	fileHeader, err := c.FormFile("file")
+	if err != nil {
+		var tooLarge *http.MaxBytesError
+		if errors.As(err, &tooLarge) {
+			c.JSON(http.StatusRequestEntityTooLarge, models.APIResponse{
+				Success: false,
+				Error:   fmt.Sprintf("The CSV is larger than %d bytes", maxCSVUploadBytes),
+			})
+			return
+		}
+		h.logger.WithError(err).Warn("Missing CSV file")
+		c.JSON(http.StatusBadRequest, models.APIResponse{
+			Success: false,
+			Error:   `Send the CSV as multipart/form-data in a field named "file"`,
+		})
+		return
+	}
+
+	file, err := fileHeader.Open()
+	if err != nil {
+		h.logger.WithError(err).Warn("Could not open the uploaded CSV")
+		c.JSON(http.StatusBadRequest, models.APIResponse{Success: false, Error: "Could not read the uploaded file"})
+		return
+	}
+	defer func() { _ = file.Close() }()
+
+	matrix, err := models.ParseCSVMatrix(file)
+	if err != nil {
+		h.logger.WithError(err).Warn("Invalid CSV")
+		c.JSON(http.StatusBadRequest, models.APIResponse{Success: false, Error: "Invalid CSV: " + err.Error()})
+		return
+	}
+
+	h.validateAndSolve(c, models.AssignmentRequest{CostMatrix: matrix})
+}
+
+// validateAndSolve is the part of POST /solve and POST /solve/csv after the input is parsed.
+func (h *AssignmentHandler) validateAndSolve(c *gin.Context, req models.AssignmentRequest) {
 	// Validate the cost matrix
 	if err := req.Validate(); err != nil {
 		h.logger.WithError(err).Warn("Validation error")

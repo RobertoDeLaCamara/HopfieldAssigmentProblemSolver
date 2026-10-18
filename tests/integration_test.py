@@ -20,6 +20,8 @@ class TestSystemIntegration:
         self.api_base_url = os.environ.get("API_BASE_URL", "http://localhost:8080")
         self.hopfield_base_url = os.environ.get("HOPFIELD_BASE_URL", "http://localhost:5000")
         self.timeout = 30
+        # The gateway refuses to run in release mode without API_KEY, so send it when set.
+        self.headers = {"X-API-Key": os.environ["API_KEY"]} if os.environ.get("API_KEY") else {}
         
         # Wait for services to be ready
         self._wait_for_services()
@@ -197,6 +199,39 @@ class TestSystemIntegration:
         assert result["success"] is False
         assert "error" in result
     
+    def test_csv_upload_matches_json_result(self):
+        """A CSV upload returns the same solution as the equivalent JSON request."""
+        matrix = [[4, 1, 3], [2, 0, 5], [3, 2, 2]]
+        csv_text = "\n".join(",".join(str(v) for v in row) for row in matrix) + "\n"
+
+        from_json = requests.post(
+            f"{self.api_base_url}/solve", json={"cost_matrix": matrix},
+            headers=self.headers, timeout=self.timeout,
+        ).json()
+        response = requests.post(
+            f"{self.api_base_url}/solve/csv",
+            files={"file": ("costs.csv", csv_text, "text/csv")},
+            headers=self.headers, timeout=self.timeout,
+        )
+
+        assert response.status_code == 200
+        from_csv = response.json()
+        assert from_csv["success"] is True
+        assert from_csv["result"]["total_cost"] == from_json["result"]["total_cost"]
+        assert from_csv["result"]["cost_matrix"] == matrix
+
+    def test_csv_upload_reports_the_bad_cell(self):
+        response = requests.post(
+            f"{self.api_base_url}/solve/csv",
+            files={"file": ("costs.csv", "1,2\n3,x\n", "text/csv")},
+            headers=self.headers, timeout=self.timeout,
+        )
+
+        assert response.status_code == 400
+        result = response.json()
+        assert result["success"] is False
+        assert "row 2, column 2" in result["error"]
+
     def test_error_handling_missing_field(self):
         """Test error handling with missing field."""
         data = {"invalid_field": "test"}
