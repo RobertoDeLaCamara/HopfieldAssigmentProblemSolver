@@ -1,6 +1,6 @@
 # Makefile for Hopfield Assignment Problem Solver
 
-.PHONY: help build up down logs clean test lint format
+.PHONY: help build up down logs clean test test-unit test-go lint format
 
 # Variables
 DOCKER_COMPOSE = docker-compose
@@ -56,14 +56,21 @@ clean: ## Clean containers, images and volumes
 	$(DOCKER_COMPOSE) down -v --rmi all
 	docker system prune -f
 
-test: ## Run tests
-	@echo "$(GREEN)Running tests...$(NC)"
-	$(DOCKER_COMPOSE) exec hopfield-service python -m pytest tests/ -v
-	$(DOCKER_COMPOSE) exec api-gateway go test ./...
+# The runtime images carry neither pytest nor the Go toolchain (and no tests/), so tests run in
+# throwaway containers, like Jenkins does. The Python image is the one hopfield/Dockerfile builds on.
+PYTHON_IMAGE ?= $(shell sed -n 's/^FROM \(python:[^ ]*\) AS builder/\1/p' hopfield/Dockerfile)
+GO_IMAGE     ?= $(shell sed -n 's/^FROM \(golang:[^ ]*\) AS builder/\1/p' api/Dockerfile)
+PY_TEST = docker run --rm -v "$(CURDIR)/hopfield:/app" -w /app $(PYTHON_IMAGE) sh -c
 
-test-unit: ## Run unit tests only
-	@echo "$(GREEN)Running unit tests...$(NC)"
-	$(DOCKER_COMPOSE) exec hopfield-service python -m pytest tests/ -v --tb=short
+test: test-unit test-go ## Run all tests (throwaway containers)
+
+test-unit: ## Run the Python tests
+	@echo "$(GREEN)Running Python tests...$(NC)"
+	$(PY_TEST) "pip install -q -r requirements.txt -r requirements-test.txt && python -m pytest tests/ -v --tb=short"
+
+test-go: ## Run the Go tests
+	@echo "$(GREEN)Running Go tests...$(NC)"
+	docker run --rm -v "$(CURDIR)/api:/src" -w /src $(GO_IMAGE) go test ./...
 
 test-integration: ## Run integration tests only
 	@echo "$(GREEN)Running integration tests...$(NC)"
@@ -71,7 +78,7 @@ test-integration: ## Run integration tests only
 
 test-coverage: ## Run tests with coverage
 	@echo "$(GREEN)Running tests with coverage...$(NC)"
-	$(DOCKER_COMPOSE) exec hopfield-service python -m pytest tests/ --cov=src --cov-report=html --cov-report=term
+	$(PY_TEST) "pip install -q -r requirements.txt -r requirements-test.txt && python -m pytest tests/ --cov=src --cov-report=html --cov-report=term"
 
 test-local: ## Run tests locally (without Docker)
 	@echo "$(GREEN)Running tests locally...$(NC)"

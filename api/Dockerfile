@@ -20,7 +20,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/main.go
 
 # Runtime stage
-FROM alpine:latest
+FROM alpine:3.23
 
 # Instalar ca-certificates para HTTPS
 RUN apk --no-cache add ca-certificates
@@ -43,6 +43,10 @@ USER appuser
 
 # Exponer puerto
 EXPOSE 8080
+
+# El contenedor está listo cuando /health responde (el puerto lo fija PORT, 8080 por defecto)
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+    CMD wget -qO- "http://localhost:${PORT:-8080}/health" >/dev/null || exit 1
 
 # Comando por defecto
 CMD ["./main"]
