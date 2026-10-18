@@ -138,6 +138,13 @@ func (h *AssignmentHandler) SolveBatch(c *gin.Context) {
 	})
 }
 
+// solverResponse is the envelope the Python solver answers with; Result is left raw.
+type solverResponse struct {
+	Success bool            `json:"success"`
+	Result  json.RawMessage `json:"result,omitempty"`
+	Error   string          `json:"error,omitempty"`
+}
+
 // callHopfieldServiceWithContext calls the Python service to solve the problem with context
 func (h *AssignmentHandler) callHopfieldServiceWithContext(ctx context.Context, req models.AssignmentRequest) (*models.AssignmentResponse, error) {
 	// Prepare the request
@@ -176,8 +183,9 @@ func (h *AssignmentHandler) callHopfieldServiceWithContext(ctx context.Context, 
 		return nil, fmt.Errorf("service error: %s", errorResp.Error)
 	}
 
-	// Parse successful response
-	var apiResp models.APIResponse
+	// Parse successful response. The result stays raw so it is decoded once, straight
+	// into AssignmentResponse, instead of generic value -> Marshal -> Unmarshal.
+	var apiResp solverResponse
 	if err := json.Unmarshal(respBody, &apiResp); err != nil {
 		return nil, fmt.Errorf("error parsing response: %w", err)
 	}
@@ -186,15 +194,12 @@ func (h *AssignmentHandler) callHopfieldServiceWithContext(ctx context.Context, 
 		return nil, fmt.Errorf("service error: %s", apiResp.Error)
 	}
 
-	// Convert result to AssignmentResponse
-	resultBytes, err := json.Marshal(apiResp.Result)
-	if err != nil {
-		return nil, fmt.Errorf("error serializing result: %w", err)
-	}
-
 	var assignmentResp models.AssignmentResponse
-	if err := json.Unmarshal(resultBytes, &assignmentResp); err != nil {
-		return nil, fmt.Errorf("error parsing result: %w", err)
+	// An absent result decodes to the zero value, as it did when it went through "null".
+	if len(apiResp.Result) > 0 {
+		if err := json.Unmarshal(apiResp.Result, &assignmentResp); err != nil {
+			return nil, fmt.Errorf("error parsing result: %w", err)
+		}
 	}
 
 	return &assignmentResp, nil

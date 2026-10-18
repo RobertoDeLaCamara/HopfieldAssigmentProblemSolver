@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -344,6 +345,7 @@ func TestAssignmentHandler_CallHopfieldServiceWithContext(t *testing.T) {
 					assert.Equal(t, tt.expectedResult.Assignments, result.Assignments)
 					assert.Equal(t, tt.expectedResult.TotalCost, result.TotalCost)
 					assert.Equal(t, tt.expectedResult.Iterations, result.Iterations)
+					assert.Equal(t, tt.expectedResult.CostMatrix, result.CostMatrix)
 				}
 			}
 
@@ -427,4 +429,52 @@ func createMockErrorResponseBody(t *testing.T, errorMsg string) io.ReadCloser {
 	jsonData, err := json.Marshal(response)
 	assert.NoError(t, err)
 	return io.NopCloser(bytes.NewBuffer(jsonData))
+}
+
+// The solver result is decoded once from raw JSON; these pin the edge cases so the
+// response stays identical to the old Marshal/Unmarshal round trip (cnds-style golden cases).
+func TestAssignmentHandler_CallHopfieldService_ResultDecoding(t *testing.T) {
+	cases := []struct {
+		name      string
+		body      string
+		wantErr   bool
+		wantCost  float64
+		wantAssig []int
+	}{
+		{"extra unknown fields are ignored",
+			`{"success":true,"request_id":"x","result":{"assignments":[1,0],"total_cost":5,"iterations":3,"cost_matrix":[[1,2],[3,4]],"extra":{"a":1}}}`,
+			false, 5, []int{1, 0}},
+		{"absent result is an empty response, not an error",
+			`{"success":true}`, false, 0, nil},
+		{"null result is an empty response, not an error",
+			`{"success":true,"result":null}`, false, 0, nil},
+		{"result of the wrong type is an error",
+			`{"success":true,"result":"nope"}`, true, 0, nil},
+		{"success=false carries the solver message",
+			`{"success":false,"error":"bad matrix"}`, true, 0, nil},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			handler := NewAssignmentHandler(logrus.New())
+			mockClient := &MockHTTPClient{}
+			handler.httpClient = mockClient
+			mockClient.On("Do", mock.Anything).Return(&http.Response{
+				StatusCode: http.StatusOK,
+				Body:       io.NopCloser(strings.NewReader(tc.body)),
+			}, nil)
+
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			got, err := handler.callHopfieldServiceWithContext(ctx, models.AssignmentRequest{CostMatrix: [][]float64{{1, 2}, {3, 4}}})
+
+			if tc.wantErr {
+				assert.Error(t, err)
+				assert.Nil(t, got)
+				return
+			}
+			assert.NoError(t, err)
+			assert.Equal(t, tc.wantCost, got.TotalCost)
+			assert.Equal(t, tc.wantAssig, got.Assignments)
+		})
+	}
 }
