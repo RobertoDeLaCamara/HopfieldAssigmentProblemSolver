@@ -39,7 +39,7 @@ pipeline {
                             docker run --rm \
                                 -v "$WORKSPACE/hopfield:/app" \
                                 -w /app \
-                                python:3.11-slim \
+                                python:3.14-slim \
                                 sh -c "pip install --quiet flake8 && flake8 src/ --max-line-length=120 --count --statistics"
                             '''
                         }
@@ -66,7 +66,7 @@ pipeline {
                             docker run --rm \
                                 -v "$WORKSPACE/hopfield:/app" \
                                 -w /app \
-                                python:3.11-slim \
+                                python:3.14-slim \
                                 sh -c "pip install --quiet pip-audit && pip-audit -r requirements.txt"
                             '''
                         }
@@ -85,7 +85,7 @@ pipeline {
                                 docker run --name test-solver-$BUILD_NUMBER \
                                     -v "$WORKSPACE/hopfield:/app" \
                                     -w /app \
-                                    python:3.11-slim \
+                                    python:3.14-slim \
                                     sh -c "pip install --quiet -r requirements.txt pytest pytest-cov && python -m pytest tests/ -v \
                                         --junitxml=test-results-python.xml \
                                         --cov=src \
@@ -144,7 +144,7 @@ pipeline {
                             -Dsonar.projectKey=HopfieldAssigmentProblemSolver \
                             -Dsonar.sources=hopfield/src,api \
                             -Dsonar.tests=hopfield/tests \
-                            -Dsonar.python.version=3.11 \
+                            -Dsonar.python.version=3.14 \
                             -Dsonar.python.coverage.reportPaths=hopfield/coverage-python.xml \
                             -Dsonar.host.url=http://192.168.1.147:9000 \
                             -Dsonar.login="\$SONAR_USER" \
