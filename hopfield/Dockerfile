@@ -32,7 +32,6 @@ COPY --from=builder /root/.local /home/appuser/.local
 
 # Copy application code
 COPY src/ ./src/
-COPY tests/ ./tests/
 
 # Set environment variables
 ENV PYTHONPATH=/app/src \
