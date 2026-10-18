@@ -34,6 +34,9 @@ services:
       - PORT=8080
       - GIN_MODE=release
       - HOPFIELD_SERVICE_URL=http://hopfield-service:5000
+      # Required with GIN_MODE=release: the gateway refuses to start in open mode (see SECURITY.md).
+      # Put it in .env; the dev overlay runs with GIN_MODE=debug, where it may stay empty.
+      - API_KEY=${API_KEY:-}
     depends_on:
       hopfield-service:
         condition: service_healthy

@@ -22,6 +22,7 @@ services:
     environment:
       - GIN_MODE=release
       - LOG_LEVEL=info
+      - "API_KEY=${API_KEY:?Set API_KEY in .env - the gateway refuses to start in release mode without it}"
     restart: always
     deploy:
       resources:

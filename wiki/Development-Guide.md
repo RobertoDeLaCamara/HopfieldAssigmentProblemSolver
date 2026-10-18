@@ -106,7 +106,7 @@ Both layers validate independently. The Python layer is the authoritative constr
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `API_KEY` | `""` | Enable auth if set (Go gateway) |
+| `API_KEY` | `""` | Required when `GIN_MODE=release` (the gateway refuses to start without it); optional with `debug` |
 | `PORT` | `8080` | Go gateway listen port |
 | `GIN_MODE` | `debug` | `release` for production |
 | `HOPFIELD_SERVICE_URL` | `http://hopfield-service:5000` | Python solver URL |

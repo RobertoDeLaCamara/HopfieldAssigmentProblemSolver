@@ -85,7 +85,7 @@ Matrix size is limited to 50x50 to prevent resource exhaustion attacks. Cost val
 
 ### Authentication
 
-API key authentication is optional by default (for development). **You must enable it in production** by setting the `API_KEY` environment variable.
+API key authentication is **required in release mode**: with `GIN_MODE=release` the gateway refuses to start unless `API_KEY` is set. It is optional only in `GIN_MODE=debug` (development), where it runs open and logs a warning. Set `API_KEY` in `.env`; the Compose files pass it through, and `docker-compose.prod.yml` fails fast if it is missing.
 
 ## Security Updates
 
