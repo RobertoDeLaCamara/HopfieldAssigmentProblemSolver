@@ -2,11 +2,11 @@
 -r requirements-test.txt
 
 # Development tools
-black==26.5.1
+black==26.10.1
 flake8==7.4.1
-isort==9.0.1
-mypy==2.3.1
-pre-commit==4.6.2
+isort==9.0.2
+mypy==2.4.0
+pre-commit==4.7.0
 
 # Type stubs
-types-requests==2.33.0.20260906
+types-requests==2.33.0.20261006
