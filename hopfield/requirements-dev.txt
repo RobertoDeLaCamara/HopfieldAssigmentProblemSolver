@@ -3,10 +3,10 @@
 
 # Development tools
 black==26.10.1
-flake8==7.4.1
+flake8==7.5.0
 isort==9.0.2
-mypy==2.4.0
+mypy==2.4.1
 pre-commit==4.7.0
 
 # Type stubs
-types-requests==2.33.0.20261006
+types-requests==2.33.0.20261030
